@@ -385,7 +385,7 @@ export default function Home() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span>GP Diagnostic Aide</span>
               <span>Building responsible clinical AI for primary care.</span>
-              <span>� 2026</span>
+              <span>(c) 2026</span>
             </div>
           </footer>
         </div>
