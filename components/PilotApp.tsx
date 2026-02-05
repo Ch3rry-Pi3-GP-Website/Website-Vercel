@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import DecisionFlow, { type DecisionSession } from "@/components/DecisionFlow";
 import { decisionTreeMap } from "@/lib/decisionTrees";
 
@@ -132,9 +134,31 @@ export default function PilotApp() {
             <span className="text-rose-600">{summaryState.error}</span>
           )}
           {summaryState.status === "success" && summaryState.summary && (
-            <p className="whitespace-pre-wrap text-[var(--color-ink)]">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ children }) => (
+                  <p className="mt-3 text-sm text-[var(--color-ink)]">
+                    {children}
+                  </p>
+                ),
+                strong: ({ children }) => (
+                  <strong className="font-semibold text-[var(--color-ink)]">
+                    {children}
+                  </strong>
+                ),
+                ul: ({ children }) => (
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--color-ink-soft)]">
+                    {children}
+                  </ul>
+                ),
+                li: ({ children }) => (
+                  <li className="leading-relaxed">{children}</li>
+                ),
+              }}
+            >
               {summaryState.summary}
-            </p>
+            </ReactMarkdown>
           )}
         </div>
 
