@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DecisionFlow, { type DecisionSession } from "@/components/DecisionFlow";
@@ -27,6 +29,7 @@ type SummaryState = {
   status: "idle" | "loading" | "success" | "error";
   summary?: string;
   error?: string;
+  generatedAt?: string;
 };
 
 const buildSummaryPayload = (session: DecisionSession | null): SummaryPayload | null => {
@@ -64,6 +67,9 @@ export default function PilotApp() {
   const [summaryState, setSummaryState] = useState<SummaryState>({
     status: "idle",
   });
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const noteRef = useRef<HTMLDivElement | null>(null);
 
   const payload = useMemo(() => buildSummaryPayload(session), [session]);
   const hasSelections = useMemo(
@@ -75,11 +81,23 @@ export default function PilotApp() {
     setSummaryState((prev) =>
       prev.status === "idle" ? prev : { status: "idle" }
     );
+    setDownloadError(null);
   }, [payload?.steps.length, session?.treeId]);
+
+  const formattedDate = useMemo(() => {
+    if (!summaryState.generatedAt) return null;
+    const date = new Date(summaryState.generatedAt);
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  }, [summaryState.generatedAt]);
 
   const handleSummarise = async () => {
     if (!payload) return;
     setSummaryState({ status: "loading" });
+    setDownloadError(null);
     try {
       const response = await fetch("/api/summary", {
         method: "POST",
@@ -90,10 +108,49 @@ export default function PilotApp() {
       if (!response.ok || !data?.ok) {
         throw new Error(data?.error || "Unable to summarise.");
       }
-      setSummaryState({ status: "success", summary: data.summary });
+      setSummaryState({
+        status: "success",
+        summary: data.summary,
+        generatedAt: new Date().toISOString(),
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error.";
       setSummaryState({ status: "error", error: message });
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!noteRef.current || summaryState.status !== "success") return;
+    setIsDownloading(true);
+    setDownloadError(null);
+    try {
+      const canvas = await html2canvas(noteRef.current, {
+        scale: 2,
+        backgroundColor: "#f3f6fb",
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ unit: "pt", format: "a4" });
+      const margin = 36;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let imgWidth = pageWidth - margin * 2;
+      let imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const maxHeight = pageHeight - margin * 2;
+      if (imgHeight > maxHeight) {
+        const scale = maxHeight / imgHeight;
+        imgHeight *= scale;
+        imgWidth *= scale;
+      }
+      pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+      const dateStamp = summaryState.generatedAt
+        ? summaryState.generatedAt.slice(0, 10)
+        : new Date().toISOString().slice(0, 10);
+      pdf.save(`gp-summary-${dateStamp}.pdf`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Download failed.";
+      setDownloadError(message);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -125,7 +182,10 @@ export default function PilotApp() {
           </button>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-4 text-sm text-[var(--color-muted)]">
+        <div
+          ref={noteRef}
+          className="mt-6 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-4 text-sm text-[var(--color-muted)]"
+        >
           {summaryState.status === "idle" &&
             "Complete the pathway and click Summarise to generate a draft note."}
           {summaryState.status === "loading" &&
@@ -134,32 +194,54 @@ export default function PilotApp() {
             <span className="text-rose-600">{summaryState.error}</span>
           )}
           {summaryState.status === "success" && summaryState.summary && (
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                p: ({ children }) => (
-                  <p className="mt-3 text-sm text-[var(--color-ink)]">
-                    {children}
-                  </p>
-                ),
-                strong: ({ children }) => (
-                  <strong className="font-semibold text-[var(--color-ink)]">
-                    {children}
-                  </strong>
-                ),
-                ul: ({ children }) => (
-                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--color-ink-soft)]">
-                    {children}
-                  </ul>
-                ),
-                li: ({ children }) => (
-                  <li className="leading-relaxed">{children}</li>
-                ),
-              }}
-            >
-              {summaryState.summary}
-            </ReactMarkdown>
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+                Date of diagnosis
+              </p>
+              <p className="mt-1 text-sm font-semibold text-[var(--color-ink)]">
+                {formattedDate ?? "Pending"}
+              </p>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({ children }) => (
+                    <p className="mt-3 text-sm text-[var(--color-ink)]">
+                      {children}
+                    </p>
+                  ),
+                  strong: ({ children }) => (
+                    <strong className="font-semibold text-[var(--color-ink)]">
+                      {children}
+                    </strong>
+                  ),
+                  ul: ({ children }) => (
+                    <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[var(--color-ink-soft)]">
+                      {children}
+                    </ul>
+                  ),
+                  li: ({ children }) => (
+                    <li className="leading-relaxed">{children}</li>
+                  ),
+                }}
+              >
+                {summaryState.summary}
+              </ReactMarkdown>
+            </div>
           )}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+          {downloadError && (
+            <span className="text-xs text-rose-600">{downloadError}</span>
+          )}
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={summaryState.status !== "success" || isDownloading}
+            className="rounded-full border border-[var(--color-border)] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ink)] shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isDownloading ? "Preparing PDF..." : "Download PDF"}
+          </button>
         </div>
 
         <p className="mt-4 text-xs text-[var(--color-muted)]">

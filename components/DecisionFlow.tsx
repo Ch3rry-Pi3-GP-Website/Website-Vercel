@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   decisionTreeMap,
   decisionTrees,
@@ -33,6 +33,11 @@ type DecisionFlowProps = {
 export default function DecisionFlow({ onSessionChange }: DecisionFlowProps) {
   const [treeId, setTreeId] = useState<string | null>(null);
   const [history, setHistory] = useState<DecisionHistoryEntry[]>([]);
+  const [micSupported, setMicSupported] = useState(true);
+  const [isListening, setIsListening] = useState(false);
+  const [lastTranscript, setLastTranscript] = useState<string | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const tree = useMemo(
     () => (treeId ? decisionTreeMap[treeId] : null),
@@ -53,10 +58,81 @@ export default function DecisionFlow({ onSessionChange }: DecisionFlowProps) {
     });
   }, [treeId, tree?.label, history, currentNode, onSessionChange]);
 
+  useEffect(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setMicSupported(!!SpeechRecognition);
+  }, []);
+
   const handleSelectTree = (id: string) => {
     const nextTree = decisionTreeMap[id];
     setTreeId(id);
     setHistory([{ nodeId: nextTree.rootId }]);
+  };
+
+  const getSpeechRecognition = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+    if (!recognitionRef.current) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-GB";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognitionRef.current = recognition;
+    }
+    return recognitionRef.current;
+  };
+
+  const resolveTreeFromTranscript = (transcript: string) => {
+    const normalised = transcript.toLowerCase();
+    if (normalised.includes("throat") || normalised.includes("neck")) {
+      return "throat";
+    }
+    if (normalised.includes("nose") || normalised.includes("nasal")) {
+      return "nose";
+    }
+    if (normalised.includes("ear")) {
+      return "ears";
+    }
+    return null;
+  };
+
+  const handleMicrophone = () => {
+    setMicError(null);
+    const recognition = getSpeechRecognition();
+    if (!recognition) {
+      setMicSupported(false);
+      setMicError("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+      return;
+    }
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript ?? "";
+      setLastTranscript(transcript);
+      const target = resolveTreeFromTranscript(transcript);
+      if (target) {
+        handleSelectTree(target);
+      } else {
+        setMicError("Say ears, nose, or throat and neck.");
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      setMicError(event?.error ? `Mic error: ${event.error}` : "Mic error.");
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    setIsListening(true);
+    recognition.start();
   };
 
   const handleOption = (option: DecisionOption) => {
@@ -97,7 +173,7 @@ export default function DecisionFlow({ onSessionChange }: DecisionFlowProps) {
             Select a symptom area to begin
           </h3>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {decisionTrees.map((entry) => {
             const isActive = entry.id === treeId;
             return (
@@ -115,8 +191,54 @@ export default function DecisionFlow({ onSessionChange }: DecisionFlowProps) {
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={handleMicrophone}
+            disabled={!micSupported}
+            className={`flex items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+              isListening
+                ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-white shadow-lg shadow-teal-200/60"
+                : "border-[var(--color-border)] bg-white/80 text-[var(--color-ink)] hover:-translate-y-0.5"
+            } disabled:cursor-not-allowed disabled:opacity-50`}
+            title="Use microphone to select ears, nose, or throat and neck"
+            aria-label="Select pathway by voice"
+            aria-pressed={isListening}
+          >
+            {isListening ? (
+              "Listening..."
+            ) : (
+              <span className="flex items-center gap-2">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 1a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+                  <path d="M12 19v4" />
+                  <path d="M8 23h8" />
+                </svg>
+                Voice
+              </span>
+            )}
+          </button>
         </div>
       </div>
+      {(lastTranscript || micError) && (
+        <div className="mt-3 text-xs text-[var(--color-muted)]">
+          {lastTranscript && (
+            <span className="mr-3">
+              Heard: <span className="font-semibold">{lastTranscript}</span>
+            </span>
+          )}
+          {micError && <span className="text-rose-600">{micError}</span>}
+        </div>
+      )}
 
       {!tree || !currentNode ? (
         <div className="mt-8 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-8 text-sm text-[var(--color-muted)]">

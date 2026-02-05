@@ -90,12 +90,9 @@ export const decisionTrees: DecisionTree[] = [
       "ears-mri-iams": {
         id: "ears-mri-iams",
         title: "MRI IAM's",
-        type: "question",
-        prompt: "Pattern",
-        options: [
-          { label: "Asymmetrical +/- under 60", next: "ears-hearing-aid" },
-          { label: "Symmetrical over 60", next: "ears-hearing-aid" },
-        ],
+        type: "action",
+        content: ["MRI IAM's."],
+        options: [{ label: "Hearing aid", next: "ears-hearing-aid" }],
       },
       "ears-deafness": {
         id: "ears-deafness",
@@ -110,7 +107,7 @@ export const decisionTrees: DecisionTree[] = [
         type: "question",
         prompt: "Which description best fits?",
         options: [
-          { label: "Asymmetrical +/- under 60", next: "ears-hearing-aid" },
+          { label: "Asymmetrical +/- under 60", next: "ears-mri-iams" },
           { label: "Symmetrical over 60", next: "ears-hearing-aid" },
         ],
       },
@@ -134,10 +131,6 @@ export const decisionTrees: DecisionTree[] = [
             label:
               "Most probably otitis media (acute usually painful, chronic usually painless)",
             next: "ears-otitis-media",
-          },
-          {
-            label: "Most probably otitis externa (hearing loss generally mild)",
-            next: "ears-otitis-externa",
           },
         ],
       },
