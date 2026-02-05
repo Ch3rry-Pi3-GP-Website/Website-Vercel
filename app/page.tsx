@@ -1,3 +1,5 @@
+import DecisionFlow from "@/components/DecisionFlow";
+
 const highlights = [
   {
     title: "Symptom-led triage",
@@ -324,6 +326,26 @@ export default function Home() {
                   </p>
                 </div>
               ))}
+            </div>
+          </section>
+
+          <section id="prototype" className="mt-24">
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-accent-strong)]">
+                  Interactive prototype
+                </p>
+                <h2 className="mt-3 font-serif text-3xl text-[var(--color-ink)] md:text-4xl">
+                  Step through the ENT decision pathways
+                </h2>
+              </div>
+              <p className="max-w-sm text-sm text-[var(--color-muted)]">
+                A guided flow that mirrors the symptom-based pathways for adult
+                ears, noses, and throats/necks.
+              </p>
+            </div>
+            <div className="mt-10">
+              <DecisionFlow />
             </div>
           </section>
 
