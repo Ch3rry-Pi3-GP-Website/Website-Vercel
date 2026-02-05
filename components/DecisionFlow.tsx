@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   decisionTreeMap,
   decisionTrees,
+  type DecisionNode,
   type DecisionOption,
 } from "@/lib/decisionTrees";
 
-type HistoryEntry = {
+export type DecisionHistoryEntry = {
   nodeId: string;
-  choice?: string;
+  selectedOption?: string;
 };
 
 const emphasisStyles: Record<string, string> = {
@@ -18,9 +19,20 @@ const emphasisStyles: Record<string, string> = {
   warning: "border-amber-200 bg-amber-50 text-amber-900",
 };
 
-export default function DecisionFlow() {
+export type DecisionSession = {
+  treeId: string | null;
+  treeLabel?: string;
+  history: DecisionHistoryEntry[];
+  currentNode: DecisionNode | null;
+};
+
+type DecisionFlowProps = {
+  onSessionChange?: (session: DecisionSession) => void;
+};
+
+export default function DecisionFlow({ onSessionChange }: DecisionFlowProps) {
   const [treeId, setTreeId] = useState<string | null>(null);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [history, setHistory] = useState<DecisionHistoryEntry[]>([]);
 
   const tree = useMemo(
     () => (treeId ? decisionTreeMap[treeId] : null),
@@ -31,6 +43,16 @@ export default function DecisionFlow() {
     return tree.nodes[history[history.length - 1].nodeId] ?? null;
   }, [tree, history]);
 
+  useEffect(() => {
+    if (!onSessionChange) return;
+    onSessionChange({
+      treeId,
+      treeLabel: tree?.label,
+      history,
+      currentNode,
+    });
+  }, [treeId, tree?.label, history, currentNode, onSessionChange]);
+
   const handleSelectTree = (id: string) => {
     const nextTree = decisionTreeMap[id];
     setTreeId(id);
@@ -38,7 +60,16 @@ export default function DecisionFlow() {
   };
 
   const handleOption = (option: DecisionOption) => {
-    setHistory((prev) => [...prev, { nodeId: option.next, choice: option.label }]);
+    setHistory((prev) => {
+      if (prev.length === 0) return prev;
+      const updated = [...prev];
+      const lastEntry = updated[updated.length - 1];
+      updated[updated.length - 1] = {
+        ...lastEntry,
+        selectedOption: option.label,
+      };
+      return [...updated, { nodeId: option.next }];
+    });
   };
 
   const handleBack = () => {
@@ -116,9 +147,9 @@ export default function DecisionFlow() {
                     <p className="mt-2 text-sm font-semibold text-[var(--color-ink)]">
                       {node.title}
                     </p>
-                    {entry.choice && (
+                    {entry.selectedOption && (
                       <p className="mt-1 text-xs text-[var(--color-muted)]">
-                        Selected: {entry.choice}
+                        Selected: {entry.selectedOption}
                       </p>
                     )}
                   </div>

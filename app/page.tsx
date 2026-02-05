@@ -1,4 +1,4 @@
-import DecisionFlow from "@/components/DecisionFlow";
+import SiteHeader from "@/components/SiteHeader";
 
 const highlights = [
   {
@@ -60,54 +60,7 @@ export default function Home() {
         </div>
 
         <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-10">
-          <header className="flex items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="relative h-11 w-11 rounded-2xl bg-[var(--color-accent)] shadow-lg shadow-teal-200/60">
-                <span className="absolute left-1/2 top-1/2 h-5 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
-                <span className="absolute left-1/2 top-1/2 h-1 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold tracking-[0.2em] text-[var(--color-ink-soft)]">
-                  GP Diagnostic Aide
-                </p>
-                <p className="text-xs text-[var(--color-muted)]">
-                  Clinical decision support
-                </p>
-              </div>
-            </div>
-            <nav className="hidden items-center gap-6 text-xs uppercase tracking-[0.18em] text-[var(--color-muted)] md:flex">
-              <a
-                href="#overview"
-                className="transition hover:text-[var(--color-ink)]"
-              >
-                Overview
-              </a>
-              <a
-                href="#collaboration"
-                className="transition hover:text-[var(--color-ink)]"
-              >
-                Collaboration
-              </a>
-              <a
-                href="#workflow"
-                className="transition hover:text-[var(--color-ink)]"
-              >
-                Workflow
-              </a>
-              <a
-                href="#governance"
-                className="transition hover:text-[var(--color-ink)]"
-              >
-                Governance
-              </a>
-            </nav>
-            <button
-              className="hidden rounded-full border border-[var(--color-border)] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ink)] shadow-sm backdrop-blur transition hover:-translate-y-0.5 md:inline-flex"
-              type="button"
-            >
-              Pilot Access
-            </button>
-          </header>
+          <SiteHeader />
 
           <section className="mt-16 grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="space-y-6 animate-[fade-in-up_0.9s_ease_forwards]">
@@ -326,26 +279,6 @@ export default function Home() {
                   </p>
                 </div>
               ))}
-            </div>
-          </section>
-
-          <section id="prototype" className="mt-24">
-            <div className="flex flex-wrap items-end justify-between gap-6">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-accent-strong)]">
-                  Interactive prototype
-                </p>
-                <h2 className="mt-3 font-serif text-3xl text-[var(--color-ink)] md:text-4xl">
-                  Step through the ENT decision pathways
-                </h2>
-              </div>
-              <p className="max-w-sm text-sm text-[var(--color-muted)]">
-                A guided flow that mirrors the symptom-based pathways for adult
-                ears, noses, and throats/necks.
-              </p>
-            </div>
-            <div className="mt-10">
-              <DecisionFlow />
             </div>
           </section>
 
