@@ -120,11 +120,6 @@ export const earSymptoms: EarSymptomDefinition[] = [
         prompt: "Is the ear ache worse in one ear?",
         options: ["Left ear", "Both ears", "Right ear"],
       },
-      {
-        id: "earache_duration",
-        prompt: "Is the ear ache recent or long-standing?",
-        options: ["Recent", "Long-standing"],
-      },
     ],
   },
   {
@@ -179,15 +174,32 @@ export const earSymptoms: EarSymptomDefinition[] = [
 
 export const earSymptomOrder = earSymptoms.map((symptom) => symptom.label);
 
-const hiddenSummaryQuestionIds = new Set(["hearing_loss_severity"]);
-
 const symptomDiagnosisOptions: Record<EarSymptomId, string[]> = {
   hearing_loss: ["Inner ear hearing loss (sensorineural hearing loss)"],
-  earache: ["Ear infection (acute otitis media)", "Jaw-joint problem (TMJ dysfunction)"],
+  earache: ["Jaw-joint problem (TMJ dysfunction)", "Referred pain from other head/neck structures (referred otalgia)"],
   discharge: ["Outer ear infection (otitis externa)"],
   itching: ["Outer ear infection (otitis externa)"],
   tinnitus: ["Inner ear condition (inner ear pathology)"],
   vertigo: ["Benign positional vertigo (BPV)", "Meniere's disease (Menieres type)", "Inner ear infection (labyrinthitis)"],
+};
+
+const lateralityQuestionIds = new Set([
+  "hearing_loss_side",
+  "earache_side",
+  "tinnitus_side",
+]);
+
+export const formatAnswerForAudience = (
+  questionId: string,
+  answer: string,
+  audience: "clinician" | "patient"
+) => {
+  if (audience !== "clinician") return answer;
+  if (!lateralityQuestionIds.has(questionId)) return answer;
+  if (answer === "Left ear") return "Left ear (asymmetric)";
+  if (answer === "Right ear") return "Right ear (asymmetric)";
+  if (answer === "Both ears") return "Both ears (bilateral/symmetric)";
+  return answer;
 };
 
 const createEmptyResponses = (): EarResponses => {
@@ -313,30 +325,16 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
 
   const earAche = responses.earache;
   if (earAche.present) {
-    const duration = earAche.answers.earache_duration;
-    if (duration === "Recent") {
-      diagnoses.push({
-        title: "Ear infection (acute otitis media)",
-        basedOn: ["earache"],
-        type: "single",
-      });
-      expectations.push({
-        text: "Treat locally (ear drops with steroid/antibiotic) and/or systemic (oral) antibiotics.",
-        basedOn: ["earache"],
-        type: "single",
-      });
-    } else if (duration === "Long-standing") {
-      diagnoses.push({
-        title: "Jaw-joint problem (TMJ dysfunction)",
-        basedOn: ["earache"],
-        type: "single",
-      });
-      expectations.push({
-        text: "Consider dental review (for example, a bite plate).",
-        basedOn: ["earache"],
-        type: "single",
-      });
-    }
+    diagnoses.push({
+      title: "Earache unlikely to be ear-related; most commonly a jaw-joint problem (TMJ dysfunction)",
+      basedOn: ["earache"],
+      type: "single",
+    });
+    expectations.push({
+      text: "For example, consult a dentist to provide a bite plate.",
+      basedOn: ["earache"],
+      type: "single",
+    });
   }
 
   const discharge = responses.discharge;
@@ -557,16 +555,18 @@ export const buildEarsSummaryPayload = (
 
     const followUps: Array<{ question: string; answer: string }> = [];
     symptom.followUps.forEach((question) => {
-      if (hiddenSummaryQuestionIds.has(question.id)) {
-        return;
-      }
       const answer = response.answers[question.id];
       if (answer) {
-        followUps.push({ question: question.prompt, answer });
+        const formattedAnswer = formatAnswerForAudience(
+          question.id,
+          answer,
+          audience
+        );
+        followUps.push({ question: question.prompt, answer: formattedAnswer });
         questionsAsked.push({
           symptom: symptom.label,
           question: question.prompt,
-          answer,
+          answer: formattedAnswer,
           type: "followup",
         });
       }

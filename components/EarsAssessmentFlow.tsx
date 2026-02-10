@@ -5,6 +5,7 @@ import {
   buildEarsSummaryPayload,
   computeEarsAssessment,
   earSymptoms,
+  formatAnswerForAudience,
   type EarAnswerEvent,
   type EarAssessmentSummaryPayload,
   type EarQuestionStep,
@@ -88,7 +89,7 @@ export default function EarsAssessmentFlow({
           rows.push({
             symptom: symptom.label,
             question: question.prompt,
-            answer,
+            answer: formatAnswerForAudience(question.id, answer, audience),
           });
         }
       });
