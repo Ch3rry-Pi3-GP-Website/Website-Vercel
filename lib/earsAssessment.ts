@@ -79,6 +79,7 @@ export type EarAssessmentSummaryPayload = {
   }>;
   diagnoses: EarDiagnosis[];
   expectations: EarExpectation[];
+  alternateDiagnoses: string[];
 };
 
 export const earSymptoms: EarSymptomDefinition[] = [
@@ -177,6 +178,17 @@ export const earSymptoms: EarSymptomDefinition[] = [
 ];
 
 export const earSymptomOrder = earSymptoms.map((symptom) => symptom.label);
+
+const hiddenSummaryQuestionIds = new Set(["hearing_loss_severity"]);
+
+const symptomDiagnosisOptions: Record<EarSymptomId, string[]> = {
+  hearing_loss: ["Inner ear hearing loss (sensorineural hearing loss)"],
+  earache: ["Ear infection (acute otitis media)", "Jaw-joint problem (TMJ dysfunction)"],
+  discharge: ["Outer ear infection (otitis externa)"],
+  itching: ["Outer ear infection (otitis externa)"],
+  tinnitus: ["Inner ear condition (inner ear pathology)"],
+  vertigo: ["Benign positional vertigo (BPV)", "Meniere's disease (Menieres type)", "Inner ear infection (labyrinthitis)"],
+};
 
 const createEmptyResponses = (): EarResponses => {
   return earSymptoms.reduce((acc, symptom) => {
@@ -545,6 +557,9 @@ export const buildEarsSummaryPayload = (
 
     const followUps: Array<{ question: string; answer: string }> = [];
     symptom.followUps.forEach((question) => {
+      if (hiddenSummaryQuestionIds.has(question.id)) {
+        return;
+      }
       const answer = response.answers[question.id];
       if (answer) {
         followUps.push({ question: question.prompt, answer });
@@ -595,6 +610,33 @@ export const buildEarsSummaryPayload = (
     });
   }
 
+  const selectedTitles = new Set(diagnoses.map((diagnosis) => diagnosis.title));
+  const alternateDiagnosesSet = new Set<string>();
+
+  const presentSymptomIds = earSymptoms
+    .filter((symptom) => responses[symptom.id].present)
+    .map((symptom) => symptom.id);
+
+  presentSymptomIds.forEach((symptomId) => {
+    const options = symptomDiagnosisOptions[symptomId] ?? [];
+    options.forEach((title) => {
+      if (!selectedTitles.has(title)) {
+        alternateDiagnosesSet.add(title);
+      }
+    });
+  });
+
+  const matchedCombos = comboRules.filter((rule) =>
+    rule.symptoms.every((symptom) => presentSymptomIds.includes(symptom))
+  );
+  matchedCombos.forEach((rule) => {
+    if (!selectedTitles.has(rule.diagnosis)) {
+      alternateDiagnosesSet.add(rule.diagnosis);
+    }
+  });
+
+  const alternateDiagnoses = Array.from(alternateDiagnosesSet);
+
   return {
     area: "ears",
     audience,
@@ -604,5 +646,6 @@ export const buildEarsSummaryPayload = (
     questionsAsked,
     diagnoses,
     expectations,
+    alternateDiagnoses,
   };
 };

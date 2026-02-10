@@ -49,6 +49,7 @@ export const SummaryInputSchema = z.object({
   questionsAsked: z.array(QuestionAskedSchema),
   diagnoses: z.array(DiagnosisSchema),
   expectations: z.array(ExpectationSchema),
+  alternateDiagnoses: z.array(z.string()),
 });
 
 const SummaryState = new StateSchema({
@@ -60,6 +61,7 @@ const SummaryState = new StateSchema({
   questionsAsked: z.array(QuestionAskedSchema),
   diagnoses: z.array(DiagnosisSchema),
   expectations: z.array(ExpectationSchema),
+  alternateDiagnoses: z.array(z.string()),
   draft: z.string().optional(),
   reviewPass: z.boolean().optional(),
   reviewIssues: z.array(z.string()).optional(),
@@ -77,6 +79,7 @@ type SummaryStateType = {
   questionsAsked: z.infer<typeof QuestionAskedSchema>[];
   diagnoses: z.infer<typeof DiagnosisSchema>[];
   expectations: z.infer<typeof ExpectationSchema>[];
+  alternateDiagnoses: string[];
   draft?: string;
   reviewPass?: boolean;
   reviewIssues?: string[];
@@ -96,6 +99,7 @@ const formatSummaryInput = (state: SummaryStateType) => {
       questionsAsked: state.questionsAsked,
       diagnoses: state.diagnoses,
       expectations: state.expectations,
+      alternateDiagnoses: state.alternateDiagnoses,
     },
     null,
     2
@@ -212,5 +216,6 @@ export async function generateSummary(input: SummaryInput) {
     questionsAsked: input.questionsAsked,
     diagnoses: input.diagnoses,
     expectations: input.expectations,
+    alternateDiagnoses: input.alternateDiagnoses,
   });
 }
