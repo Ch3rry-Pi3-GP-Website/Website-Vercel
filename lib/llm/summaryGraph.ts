@@ -6,33 +6,57 @@ import { summaryPrompt } from "@/lib/llm/summaryPrompt";
 import { summaryReviewPrompt } from "@/lib/llm/summaryReviewPrompt";
 import { summaryRevisionPrompt } from "@/lib/llm/summaryRevisionPrompt";
 
-const StepSchema = z.object({
-  step: z.number(),
-  title: z.string(),
-  prompt: z.string().nullable().optional(),
-  selectedOption: z.string().nullable().optional(),
-  type: z.enum(["question", "action"]),
-  content: z.array(z.string()).optional(),
+const SymptomSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  present: z.boolean(),
+  initialQuestion: z.string(),
+  initialAnswer: z.string(),
+  followUps: z.array(
+    z.object({
+      question: z.string(),
+      answer: z.string(),
+    })
+  ),
 });
 
-const OutcomeSchema = z
-  .object({
-    title: z.string(),
-    content: z.array(z.string()).optional(),
-  })
-  .optional();
+const QuestionAskedSchema = z.object({
+  symptom: z.string(),
+  question: z.string(),
+  answer: z.string(),
+  type: z.enum(["initial", "followup"]),
+});
+
+const DiagnosisSchema = z.object({
+  title: z.string(),
+  basedOn: z.array(z.string()),
+  type: z.enum(["single", "combo"]),
+});
+
+const ExpectationSchema = z.object({
+  text: z.string(),
+  basedOn: z.array(z.string()),
+  type: z.enum(["single", "combo"]),
+});
 
 export const SummaryInputSchema = z.object({
-  treeId: z.string(),
-  treeLabel: z.string(),
-  steps: z.array(StepSchema),
-  outcome: OutcomeSchema,
+  area: z.literal("ears"),
+  symptomOrder: z.array(z.string()),
+  symptoms: z.array(SymptomSchema),
+  negativeSymptoms: z.array(z.string()),
+  questionsAsked: z.array(QuestionAskedSchema),
+  diagnoses: z.array(DiagnosisSchema),
+  expectations: z.array(ExpectationSchema),
 });
 
 const SummaryState = new StateSchema({
-  treeLabel: z.string(),
-  steps: z.array(StepSchema),
-  outcome: OutcomeSchema,
+  area: z.literal("ears"),
+  symptomOrder: z.array(z.string()),
+  symptoms: z.array(SymptomSchema),
+  negativeSymptoms: z.array(z.string()),
+  questionsAsked: z.array(QuestionAskedSchema),
+  diagnoses: z.array(DiagnosisSchema),
+  expectations: z.array(ExpectationSchema),
   draft: z.string().optional(),
   reviewPass: z.boolean().optional(),
   reviewIssues: z.array(z.string()).optional(),
@@ -42,9 +66,13 @@ const SummaryState = new StateSchema({
 });
 
 type SummaryStateType = {
-  treeLabel: string;
-  steps: z.infer<typeof StepSchema>[];
-  outcome?: z.infer<typeof OutcomeSchema>;
+  area: "ears";
+  symptomOrder: string[];
+  symptoms: z.infer<typeof SymptomSchema>[];
+  negativeSymptoms: string[];
+  questionsAsked: z.infer<typeof QuestionAskedSchema>[];
+  diagnoses: z.infer<typeof DiagnosisSchema>[];
+  expectations: z.infer<typeof ExpectationSchema>[];
   draft?: string;
   reviewPass?: boolean;
   reviewIssues?: string[];
@@ -56,9 +84,13 @@ type SummaryStateType = {
 const formatSummaryInput = (state: SummaryStateType) => {
   return JSON.stringify(
     {
-      tree: state.treeLabel,
-      steps: state.steps,
-      outcome: state.outcome ?? null,
+      area: state.area,
+      symptomOrder: state.symptomOrder,
+      symptoms: state.symptoms,
+      negativeSymptoms: state.negativeSymptoms,
+      questionsAsked: state.questionsAsked,
+      diagnoses: state.diagnoses,
+      expectations: state.expectations,
     },
     null,
     2
@@ -167,8 +199,12 @@ export type SummaryInput = z.infer<typeof SummaryInputSchema>;
 
 export async function generateSummary(input: SummaryInput) {
   return graph.invoke({
-    treeLabel: input.treeLabel,
-    steps: input.steps,
-    outcome: input.outcome,
+    area: input.area,
+    symptomOrder: input.symptomOrder,
+    symptoms: input.symptoms,
+    negativeSymptoms: input.negativeSymptoms,
+    questionsAsked: input.questionsAsked,
+    diagnoses: input.diagnoses,
+    expectations: input.expectations,
   });
 }

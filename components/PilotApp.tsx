@@ -5,25 +5,11 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import DecisionFlow, { type DecisionSession } from "@/components/DecisionFlow";
-import { decisionTreeMap } from "@/lib/decisionTrees";
-
-type SummaryPayload = {
-  treeId: string;
-  treeLabel: string;
-  steps: Array<{
-    step: number;
-    title: string;
-    prompt?: string | null;
-    selectedOption?: string | null;
-    type: "question" | "action";
-    content?: string[];
-  }>;
-  outcome?: {
-    title: string;
-    content?: string[];
-  };
-};
+import AreaSelector from "@/components/AreaSelector";
+import EarsAssessmentFlow, {
+  type EarAssessmentSession,
+} from "@/components/EarsAssessmentFlow";
+import type { EarAssessmentSummaryPayload } from "@/lib/earsAssessment";
 
 type SummaryState = {
   status: "idle" | "loading" | "success" | "error";
@@ -32,38 +18,9 @@ type SummaryState = {
   generatedAt?: string;
 };
 
-const buildSummaryPayload = (session: DecisionSession | null): SummaryPayload | null => {
-  if (!session?.treeId) return null;
-  const tree = decisionTreeMap[session.treeId];
-  if (!tree || session.history.length === 0) return null;
-
-  const steps = session.history.map((entry, index) => {
-    const node = tree.nodes[entry.nodeId];
-    return {
-      step: index + 1,
-      title: node.title,
-      prompt: node.prompt ?? null,
-      selectedOption: entry.selectedOption ?? null,
-      type: node.type,
-      content: node.content ?? [],
-    };
-  });
-
-  const finalNode = tree.nodes[session.history[session.history.length - 1].nodeId];
-
-  return {
-    treeId: tree.id,
-    treeLabel: tree.label,
-    steps,
-    outcome: {
-      title: finalNode.title,
-      content: finalNode.content ?? [],
-    },
-  };
-};
-
 export default function PilotApp() {
-  const [session, setSession] = useState<DecisionSession | null>(null);
+  const [area, setArea] = useState<"ears" | "nose" | "throat">("ears");
+  const [session, setSession] = useState<EarAssessmentSession | null>(null);
   const [summaryState, setSummaryState] = useState<SummaryState>({
     status: "idle",
   });
@@ -71,18 +28,23 @@ export default function PilotApp() {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const noteRef = useRef<HTMLDivElement | null>(null);
 
-  const payload = useMemo(() => buildSummaryPayload(session), [session]);
-  const hasSelections = useMemo(
-    () => payload?.steps.some((step) => step.selectedOption) ?? false,
-    [payload]
+  const payload = useMemo<EarAssessmentSummaryPayload | null>(
+    () => session?.summaryPayload ?? null,
+    [session]
   );
+
+  useEffect(() => {
+    if (area !== "ears") {
+      setSession(null);
+    }
+  }, [area]);
 
   useEffect(() => {
     setSummaryState((prev) =>
       prev.status === "idle" ? prev : { status: "idle" }
     );
     setDownloadError(null);
-  }, [payload?.steps.length, session?.treeId]);
+  }, [payload, session?.isComplete, area]);
 
   const formattedDate = useMemo(() => {
     if (!summaryState.generatedAt) return null;
@@ -156,7 +118,28 @@ export default function PilotApp() {
 
   return (
     <div className="space-y-10">
-      <DecisionFlow onSessionChange={setSession} />
+      <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+              Decision support prototype
+            </p>
+            <h3 className="mt-2 font-serif text-2xl text-[var(--color-ink)]">
+              Select a symptom area to begin
+            </h3>
+          </div>
+          <AreaSelector value={area} onChange={setArea} />
+        </div>
+      </div>
+
+      {area === "ears" ? (
+        <EarsAssessmentFlow onSessionChange={setSession} />
+      ) : (
+        <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 text-sm text-[var(--color-muted)] shadow-xl">
+          The {area === "nose" ? "nose" : "throat and neck"} pathway is being
+          reworked. Please select ears for now.
+        </div>
+      )}
 
       <div className="rounded-3xl border border-[var(--color-border)] bg-white/90 p-6 shadow-xl shadow-slate-200/70">
         <div className="flex flex-wrap items-start justify-between gap-6">
@@ -168,14 +151,16 @@ export default function PilotApp() {
               Convert the pathway into a clinical note
             </h3>
             <p className="mt-3 text-sm text-[var(--color-muted)]">
-              Generate a prose summary that documents the questions asked, the
-              responses selected, and the suggested pathway outcome.
+              Generate a structured summary that captures symptoms, questions
+              asked, likely diagnosis, and expectations for care.
             </p>
           </div>
           <button
             type="button"
             onClick={handleSummarise}
-            disabled={!payload || !hasSelections || summaryState.status === "loading"}
+            disabled={
+              !payload || !session?.isComplete || summaryState.status === "loading"
+            }
             className="rounded-full bg-[var(--color-ink)] px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             {summaryState.status === "loading" ? "Summarising..." : "Summarise"}
@@ -187,7 +172,7 @@ export default function PilotApp() {
           className="mt-6 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-4 text-sm text-[var(--color-muted)]"
         >
           {summaryState.status === "idle" &&
-            "Complete the pathway and click Summarise to generate a draft note."}
+            "Complete the assessment and click Summarise to generate a draft note."}
           {summaryState.status === "loading" &&
             "Generating a structured summary for the GP."}
           {summaryState.status === "error" && (

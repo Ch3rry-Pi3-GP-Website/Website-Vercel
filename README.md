@@ -10,7 +10,7 @@ This repository contains the marketing site and the pilot application for GP Dia
 
 - Landing page with project overview and collaboration context
 - Pilot app at `/pilot`
-- Interactive decision flow for ENT pathways
+- Sequential symptom screening for ears (single + combo logic)
 - AI summary generation (Markdown) with `gpt-4o-mini`
 - PDF export of the clinical note (client-side)
 - Voice shortcut to select ears / nose / throat+neck pathways

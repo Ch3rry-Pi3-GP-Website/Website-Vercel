@@ -1,0 +1,177 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  buildEarsSummaryPayload,
+  computeEarsAssessment,
+  earSymptoms,
+  type EarAnswerEvent,
+  type EarAssessmentSummaryPayload,
+  type EarQuestionStep,
+  type EarResponses,
+} from "@/lib/earsAssessment";
+
+export type EarAssessmentSession = {
+  area: "ears";
+  responses: EarResponses;
+  isComplete: boolean;
+  currentStep: EarQuestionStep | null;
+  summaryPayload: EarAssessmentSummaryPayload | null;
+  answeredCount: number;
+  totalQuestions: number;
+};
+
+type EarsAssessmentFlowProps = {
+  onSessionChange?: (session: EarAssessmentSession) => void;
+};
+
+const buildTotalQuestions = () => {
+  return earSymptoms.reduce((count, symptom) => {
+    return count + 1 + symptom.followUps.length;
+  }, 0);
+};
+
+const totalQuestions = buildTotalQuestions();
+
+export default function EarsAssessmentFlow({
+  onSessionChange,
+}: EarsAssessmentFlowProps) {
+  const [events, setEvents] = useState<EarAnswerEvent[]>([]);
+
+  const assessment = useMemo(() => computeEarsAssessment(events), [events]);
+
+  const session = useMemo<EarAssessmentSession>(() => {
+    const summaryPayload = assessment.isComplete
+      ? buildEarsSummaryPayload(assessment.responses)
+      : null;
+    return {
+      area: "ears",
+      responses: assessment.responses,
+      isComplete: assessment.isComplete,
+      currentStep: assessment.currentStep,
+      summaryPayload,
+      answeredCount: events.length,
+      totalQuestions,
+    };
+  }, [assessment, events.length]);
+
+  const screenedCount = useMemo(() => {
+    return earSymptoms.filter(
+      (symptom) => session.responses[symptom.id].present !== null
+    ).length;
+  }, [session.responses]);
+
+  useEffect(() => {
+    if (onSessionChange) {
+      onSessionChange(session);
+    }
+  }, [session, onSessionChange]);
+
+  const handleAnswer = (answer: string) => {
+    if (!assessment.currentStep) return;
+    setEvents((prev) => [
+      ...prev,
+      {
+        symptomId: assessment.currentStep!.symptomId,
+        questionId: assessment.currentStep!.questionId,
+        kind: assessment.currentStep!.kind,
+        value: answer,
+      },
+    ]);
+  };
+
+  const handleBack = () => {
+    setEvents((prev) => prev.slice(0, -1));
+  };
+
+  const handleRestart = () => {
+    setEvents([]);
+  };
+
+  return (
+    <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+            Ear assessment
+          </p>
+          <h3 className="mt-2 font-serif text-2xl text-[var(--color-ink)]">
+            Sequential symptom screening
+          </h3>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">
+            Each symptom is screened in order. If present, follow-up questions
+            are asked before moving to the next symptom.
+          </p>
+        </div>
+        <div className="rounded-full border border-[var(--color-border)] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ink)]">
+          Symptoms screened: {screenedCount} / {earSymptoms.length}
+        </div>
+      </div>
+
+      {assessment.isComplete ? (
+        <div className="mt-8 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-6 text-sm text-[var(--color-muted)]">
+          Assessment complete. You can now generate the GP summary.
+        </div>
+      ) : assessment.currentStep ? (
+        <div className="mt-8 grid gap-6 lg:grid-cols-[0.4fr_0.6fr]">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+              Current symptom
+            </p>
+            <p className="mt-3 text-lg font-semibold text-[var(--color-ink)]">
+              {assessment.currentStep.symptomLabel}
+            </p>
+            <p className="mt-3 text-sm text-[var(--color-muted)]">
+              {assessment.currentStep.kind === "initial"
+                ? "Screening question"
+                : "Follow-up question"}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={events.length === 0}
+                className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ink)] transition disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ink)] transition"
+              >
+                Restart
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+              Question
+            </p>
+            <h4 className="mt-3 font-serif text-2xl text-[var(--color-ink)]">
+              {assessment.currentStep.prompt}
+            </h4>
+            <div className="mt-6 grid gap-3">
+              {assessment.currentStep.options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleAnswer(option)}
+                  className="rounded-2xl border border-[var(--color-border)] bg-white/80 px-4 py-3 text-left text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <p className="mt-6 text-xs text-[var(--color-muted)]">
+        Prototype only. Outputs support clinical reasoning and do not replace
+        professional judgement.
+      </p>
+    </div>
+  );
+}

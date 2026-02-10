@@ -4,6 +4,7 @@ This guide documents the full setup for the GP Diagnostic Aide website and pilot
 
 - Next.js (App Router) website
 - Pilot app at `/pilot` with ENT decision pathways
+- Sequential symptom screening for ears with single- and multi-symptom logic
 - AI summary generation via LangChain v1 + LangGraph using `gpt-4o-mini`
 - Markdown-formatted summaries with rendered output
 - Date-stamped clinical note
@@ -87,9 +88,12 @@ Visit:
 
 - `app/page.tsx` (landing page)
 - `app/pilot/page.tsx` (pilot app page)
+- `components/AreaSelector.tsx` (area selector + voice shortcut)
+- `components/EarsAssessmentFlow.tsx` (sequential ear assessment UI)
 - `components/DecisionFlow.tsx` (decision tree UI + voice selection)
 - `components/PilotApp.tsx` (summary generation + PDF export)
 - `components/SiteHeader.tsx` (shared navigation)
+- `lib/earsAssessment.ts` (ears symptom logic + combo rules)
 - `lib/decisionTrees.ts` (ENT decision trees)
 - `lib/llm/model.ts` (OpenAI model config)
 - `lib/llm/summaryPrompt.ts` (context-engineered prompt)

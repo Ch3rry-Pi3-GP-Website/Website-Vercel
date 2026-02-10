@@ -29,8 +29,8 @@ export default function PilotPage() {
               ENT decision-support pilot
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-[var(--color-muted)]">
-              Step through symptom-based pathways and generate a structured GP
-              summary based on the questions asked and responses selected.
+              Sequentially screen symptoms and generate a structured GP summary
+              based on the questions asked and responses selected.
             </p>
           </section>
 
