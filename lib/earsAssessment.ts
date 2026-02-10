@@ -176,7 +176,7 @@ export const earSymptomOrder = earSymptoms.map((symptom) => symptom.label);
 
 const symptomDiagnosisOptions: Record<EarSymptomId, string[]> = {
   hearing_loss: ["Inner ear hearing loss (sensorineural hearing loss)"],
-  earache: ["Jaw-joint problem (TMJ dysfunction)", "Referred pain from other head/neck structures (referred otalgia)"],
+  earache: ["Temporomandibular joint (TMJ) dysfunction", "Referred pain from other head/neck structures (referred otalgia)"],
   discharge: ["Outer ear infection (otitis externa)"],
   itching: ["Outer ear infection (otitis externa)"],
   tinnitus: ["Inner ear condition (inner ear pathology)"],
@@ -310,13 +310,13 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
     const side = hearingLoss.answers.hearing_loss_side;
     if (side === "Left ear" || side === "Right ear") {
       expectations.push({
-        text: "MRI scan of the head is mandatory to exclude other serious causes.",
+        text: "Magnetic resonance imaging (MRI) scan of the head is mandatory to exclude other serious causes.",
         basedOn: ["hearing_loss"],
         type: "single",
       });
     } else if (side === "Both ears") {
       expectations.push({
-        text: "MRI scan of the head may be considered depending on findings.",
+        text: "Magnetic resonance imaging (MRI) scan of the head may be considered depending on findings.",
         basedOn: ["hearing_loss"],
         type: "single",
       });
@@ -326,7 +326,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
   const earAche = responses.earache;
   if (earAche.present) {
     diagnoses.push({
-      title: "Earache unlikely to be ear-related; most commonly a jaw-joint problem (TMJ dysfunction)",
+      title: "Earache unlikely to be ear-related; most commonly temporomandibular joint (TMJ) dysfunction",
       basedOn: ["earache"],
       type: "single",
     });
@@ -380,13 +380,13 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
     const side = tinnitus.answers.tinnitus_side;
     if (side === "Left ear" || side === "Right ear") {
       expectations.push({
-        text: "MRI scan of the head is mandatory to exclude other serious causes.",
+        text: "Magnetic resonance imaging (MRI) scan of the head is mandatory to exclude other serious causes.",
         basedOn: ["tinnitus"],
         type: "single",
       });
     } else if (side === "Both ears") {
       expectations.push({
-        text: "MRI scan of the head may be considered depending on findings.",
+        text: "Magnetic resonance imaging (MRI) scan of the head may be considered depending on findings.",
         basedOn: ["tinnitus"],
         type: "single",
       });
