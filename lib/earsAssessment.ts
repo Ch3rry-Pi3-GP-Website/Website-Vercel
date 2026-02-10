@@ -147,7 +147,7 @@ export const earSymptoms: EarSymptomDefinition[] = [
     label: "Tinnitus / noise in the ear",
     description: "Ringing, buzzing, or whooshing sounds in the ear.",
     initialPromptClinician: "Does the patient have tinnitus or noise in the ear?",
-    initialPromptPatient: "Have you been hearing ringing, buzzing, or noise in the ear?",
+    initialPromptPatient: "Have you been experiencing tinnitus?",
     followUps: [
       {
         id: "tinnitus_side",
