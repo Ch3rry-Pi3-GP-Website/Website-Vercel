@@ -176,7 +176,7 @@ export const earSymptomOrder = earSymptoms.map((symptom) => symptom.label);
 
 const symptomDiagnosisOptions: Record<EarSymptomId, string[]> = {
   hearing_loss: ["Inner ear hearing loss (sensorineural hearing loss)"],
-  earache: ["Temporomandibular joint (TMJ) dysfunction", "Referred pain from other head/neck structures (referred otalgia)"],
+  earache: ["Referred pain from other head/neck structures (referred otalgia)"],
   discharge: ["Outer ear infection (otitis externa)"],
   itching: ["Outer ear infection (otitis externa)"],
   tinnitus: ["Inner ear condition (inner ear pathology)"],
