@@ -93,6 +93,9 @@ export default function EarsAssessmentFlow({
     setEvents([]);
   };
 
+  const isSeverityQuestion =
+    assessment.currentStep?.questionId === "hearing_loss_severity";
+
   return (
     <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -119,18 +122,20 @@ export default function EarsAssessmentFlow({
         </div>
       ) : assessment.currentStep ? (
         <div className="mt-8 grid items-stretch gap-6 lg:grid-cols-[0.4fr_0.6fr]">
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg h-full min-h-[320px] lg:min-h-[400px]">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
-              Current symptom
-            </p>
-            <p className="mt-3 text-lg font-semibold text-[var(--color-ink)]">
-              {assessment.currentStep.symptomLabel}
-            </p>
-            <p className="mt-3 text-sm text-[var(--color-muted)]">
-              {assessment.currentStep.kind === "initial"
-                ? "Screening question"
-                : "Follow-up question"}
-            </p>
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg h-[420px] lg:h-[460px] flex flex-col">
+            <div className="flex-1 min-h-[160px]">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+                Current symptom
+              </p>
+              <p className="mt-3 text-lg font-semibold text-[var(--color-ink)]">
+                {assessment.currentStep.symptomLabel}
+              </p>
+              <p className="mt-3 text-sm text-[var(--color-muted)]">
+                {assessment.currentStep.kind === "initial"
+                  ? "Screening question"
+                  : "Follow-up question"}
+              </p>
+            </div>
             <div className="mt-6 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -150,29 +155,54 @@ export default function EarsAssessmentFlow({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl h-full min-h-[320px] lg:min-h-[400px]">
-            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
-              Question
-            </p>
-            <h4 className="mt-3 font-serif text-2xl text-[var(--color-ink)]">
-              {assessment.currentStep.prompt}
-            </h4>
-            {assessment.currentStep.description && (
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
-                {assessment.currentStep.description}
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl h-[420px] lg:h-[460px] flex flex-col">
+            <div className="flex-none min-h-[180px]">
+              <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+                Question
               </p>
-            )}
-            <div className="mt-6 grid gap-3">
-              {assessment.currentStep.options.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => handleAnswer(option)}
-                  className="rounded-2xl border border-[var(--color-border)] bg-white/80 px-4 py-3 text-left text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
-                >
-                  {option}
-                </button>
-              ))}
+              <h4 className="mt-3 font-serif text-2xl text-[var(--color-ink)]">
+                {assessment.currentStep.prompt}
+              </h4>
+              {assessment.currentStep.description && (
+                <p className="mt-2 text-sm text-[var(--color-muted)]">
+                  {assessment.currentStep.description}
+                </p>
+              )}
+            </div>
+            <div className="mt-6 grid gap-3 flex-1 overflow-y-auto pr-1">
+              {assessment.currentStep.options.map((option) => {
+                if (!isSeverityQuestion) {
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => handleAnswer(option)}
+                      className="rounded-2xl border border-[var(--color-border)] bg-white/80 px-4 py-3 text-left text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
+                    >
+                      {option}
+                    </button>
+                  );
+                }
+
+                const [level, ...rest] = option.split(" - ");
+                const detail = rest.join(" - ");
+
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleAnswer(option)}
+                    className="flex items-start gap-4 rounded-2xl border border-[var(--color-border)] bg-white/80 px-4 py-3 text-left text-sm text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-white text-sm font-semibold text-[var(--color-ink)] shadow-sm">
+                      {level}
+                    </span>
+                    <span className="flex-1 text-sm text-[var(--color-ink-soft)]">
+                      {detail}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
