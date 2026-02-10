@@ -96,6 +96,8 @@ export default function EarsAssessmentFlow({
   const isSeverityQuestion =
     assessment.currentStep?.questionId === "hearing_loss_severity";
 
+  const isBinaryQuestion = assessment.currentStep?.kind === "initial";
+
   return (
     <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -122,8 +124,8 @@ export default function EarsAssessmentFlow({
         </div>
       ) : assessment.currentStep ? (
         <div className="mt-8 grid items-stretch gap-6 lg:grid-cols-[0.4fr_0.6fr]">
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg h-[420px] lg:h-[460px] flex flex-col">
-            <div className="flex-1 min-h-[160px]">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg h-[380px] lg:h-[420px] flex flex-col">
+            <div className="min-h-[120px]">
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
                 Current symptom
               </p>
@@ -155,8 +157,8 @@ export default function EarsAssessmentFlow({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl h-[420px] lg:h-[460px] flex flex-col">
-            <div className="flex-none min-h-[180px]">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl h-[380px] lg:h-[420px] flex flex-col">
+            <div className="min-h-[120px]">
               <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
                 Question
               </p>
@@ -169,41 +171,52 @@ export default function EarsAssessmentFlow({
                 </p>
               )}
             </div>
-            <div className="mt-6 grid gap-3 flex-1 overflow-y-auto pr-1">
-              {assessment.currentStep.options.map((option) => {
-                if (!isSeverityQuestion) {
+            {isSeverityQuestion ? (
+              <div className="mt-4 space-y-3">
+                {assessment.currentStep.options.map((option) => {
+                  const [level, ...rest] = option.split(" - ");
+                  const detail = rest.join(" - ");
+
                   return (
-                    <button
+                    <div
                       key={option}
-                      type="button"
-                      onClick={() => handleAnswer(option)}
-                      className="rounded-2xl border border-[var(--color-border)] bg-white/80 px-4 py-3 text-left text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
+                      className="flex items-center gap-4 rounded-xl border border-[var(--color-border)] bg-white/70 px-3 py-2"
                     >
-                      {option}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAnswer(option)}
+                        aria-label={`Select severity ${level}`}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-white text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
+                      >
+                        {level}
+                      </button>
+                      <span className="text-sm leading-relaxed text-[var(--color-ink-soft)]">
+                        {detail}
+                      </span>
+                    </div>
                   );
-                }
-
-                const [level, ...rest] = option.split(" - ");
-                const detail = rest.join(" - ");
-
-                return (
+                })}
+              </div>
+            ) : (
+              <div
+                className={`mt-4 grid gap-3 ${
+                  isBinaryQuestion ? "grid-cols-2" : "grid-cols-1"
+                }`}
+              >
+                {assessment.currentStep.options.map((option) => (
                   <button
                     key={option}
                     type="button"
                     onClick={() => handleAnswer(option)}
-                    className="flex items-start gap-4 rounded-2xl border border-[var(--color-border)] bg-white/80 px-4 py-3 text-left text-sm text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
+                    className={`rounded-xl border border-[var(--color-border)] bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5 ${
+                      isBinaryQuestion ? "text-center" : "text-left"
+                    }`}
                   >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-white text-sm font-semibold text-[var(--color-ink)] shadow-sm">
-                      {level}
-                    </span>
-                    <span className="flex-1 text-sm text-[var(--color-ink-soft)]">
-                      {detail}
-                    </span>
+                    {option}
                   </button>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ) : null}
