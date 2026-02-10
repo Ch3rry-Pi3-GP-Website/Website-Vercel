@@ -331,7 +331,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
       type: "single",
     });
     expectations.push({
-      text: "For example, consult a dentist to provide a bite plate.",
+      text: "Consult a dentist to provide a bite plate.",
       basedOn: ["earache"],
       type: "single",
     });
