@@ -20,6 +20,7 @@ type SummaryState = {
 
 export default function PilotApp() {
   const [area, setArea] = useState<"ears" | "nose" | "throat">("ears");
+  const [audience, setAudience] = useState<"clinician" | "patient">("patient");
   const [session, setSession] = useState<EarAssessmentSession | null>(null);
   const [summaryState, setSummaryState] = useState<SummaryState>({
     status: "idle",
@@ -130,10 +131,35 @@ export default function PilotApp() {
           </div>
           <AreaSelector value={area} onChange={setArea} />
         </div>
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          {[
+            { id: "patient" as const, label: "Patient" },
+            { id: "clinician" as const, label: "Clinician" },
+          ].map((entry) => {
+            const isActive = audience === entry.id;
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => setAudience(entry.id)}
+                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition ${
+                  isActive
+                    ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-white shadow-lg"
+                    : "border-[var(--color-border)] bg-white/80 text-[var(--color-ink)] hover:-translate-y-0.5"
+                }`}
+              >
+                {entry.label}
+              </button>
+            );
+          })}
+          <span className="text-xs text-[var(--color-muted)]">
+            Wording adjusts for patient or clinician use.
+          </span>
+        </div>
       </div>
 
       {area === "ears" ? (
-        <EarsAssessmentFlow onSessionChange={setSession} />
+        <EarsAssessmentFlow audience={audience} onSessionChange={setSession} />
       ) : (
         <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 text-sm text-[var(--color-muted)] shadow-xl">
           The {area === "nose" ? "nose" : "throat and neck"} pathway is being

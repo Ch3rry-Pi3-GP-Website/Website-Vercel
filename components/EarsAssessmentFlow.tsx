@@ -22,6 +22,7 @@ export type EarAssessmentSession = {
 };
 
 type EarsAssessmentFlowProps = {
+  audience: "clinician" | "patient";
   onSessionChange?: (session: EarAssessmentSession) => void;
 };
 
@@ -34,15 +35,19 @@ const buildTotalQuestions = () => {
 const totalQuestions = buildTotalQuestions();
 
 export default function EarsAssessmentFlow({
+  audience,
   onSessionChange,
 }: EarsAssessmentFlowProps) {
   const [events, setEvents] = useState<EarAnswerEvent[]>([]);
 
-  const assessment = useMemo(() => computeEarsAssessment(events), [events]);
+  const assessment = useMemo(
+    () => computeEarsAssessment(events, audience),
+    [events, audience]
+  );
 
   const session = useMemo<EarAssessmentSession>(() => {
     const summaryPayload = assessment.isComplete
-      ? buildEarsSummaryPayload(assessment.responses)
+      ? buildEarsSummaryPayload(assessment.responses, audience)
       : null;
     return {
       area: "ears",
@@ -152,6 +157,11 @@ export default function EarsAssessmentFlow({
             <h4 className="mt-3 font-serif text-2xl text-[var(--color-ink)]">
               {assessment.currentStep.prompt}
             </h4>
+            {assessment.currentStep.description && (
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
+                {assessment.currentStep.description}
+              </p>
+            )}
             <div className="mt-6 grid gap-3">
               {assessment.currentStep.options.map((option) => (
                 <button

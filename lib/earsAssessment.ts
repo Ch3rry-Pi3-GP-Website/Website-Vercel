@@ -15,7 +15,9 @@ export type EarQuestion = {
 export type EarSymptomDefinition = {
   id: EarSymptomId;
   label: string;
-  initialPrompt: string;
+  description: string;
+  initialPromptClinician: string;
+  initialPromptPatient: string;
   followUps: EarQuestion[];
 };
 
@@ -38,6 +40,7 @@ export type EarQuestionStep = {
   symptomLabel: string;
   questionId: string;
   prompt: string;
+  description?: string;
   options: string[];
   kind: "initial" | "followup";
 };
@@ -60,6 +63,7 @@ export type EarAssessmentSummaryPayload = {
   symptoms: Array<{
     id: EarSymptomId;
     label: string;
+    description: string;
     present: boolean;
     initialQuestion: string;
     initialAnswer: string;
@@ -80,29 +84,39 @@ export const earSymptoms: EarSymptomDefinition[] = [
   {
     id: "hearing_loss",
     label: "Hearing loss",
-    initialPrompt: "Is the patient experiencing hearing loss?",
+    description: "Reduced hearing in one or both ears.",
+    initialPromptClinician: "Does the patient have hearing loss?",
+    initialPromptPatient: "Have you been experiencing hearing loss?",
     followUps: [
       {
         id: "hearing_loss_severity",
         prompt: "How severe is the hearing loss?",
-        options: ["1", "2", "3", "4", "5"],
+        options: [
+          "1 - Occasionally miss parts of a conversation in noisy places",
+          "2 - Need people to repeat in group conversations",
+          "3 - Struggle to hear clearly even in one-to-one conversation",
+          "4 - Need a high TV/phone volume or rely on lip-reading",
+          "5 - Unable to hear most sounds (profound hearing loss)",
+        ],
       },
       {
         id: "hearing_loss_side",
         prompt: "Is the hearing loss worse in one ear?",
-        options: ["Left ear", "Right ear", "Both ears"],
+        options: ["Left ear", "Both ears", "Right ear"],
       },
     ],
   },
   {
     id: "earache",
     label: "Ear ache (otalgia)",
-    initialPrompt: "Is the patient experiencing ear ache (otalgia)?",
+    description: "Pain or discomfort in or around the ear.",
+    initialPromptClinician: "Does the patient have ear ache (otalgia)?",
+    initialPromptPatient: "Have you been experiencing ear ache (otalgia)?",
     followUps: [
       {
         id: "earache_side",
         prompt: "Is the ear ache worse in one ear?",
-        options: ["Left ear", "Right ear", "Both ears"],
+        options: ["Left ear", "Both ears", "Right ear"],
       },
       {
         id: "earache_duration",
@@ -114,31 +128,39 @@ export const earSymptoms: EarSymptomDefinition[] = [
   {
     id: "discharge",
     label: "Discharge",
-    initialPrompt: "Is there ear discharge?",
+    description: "Fluid, pus, or blood coming from the ear.",
+    initialPromptClinician: "Is there ear discharge?",
+    initialPromptPatient: "Have you noticed discharge from the ear?",
     followUps: [],
   },
   {
     id: "itching",
     label: "Itching or irritation",
-    initialPrompt: "Is there itching or irritation in the ear?",
+    description: "Itching or irritation inside the ear canal.",
+    initialPromptClinician: "Is there itching or irritation in the ear?",
+    initialPromptPatient: "Have you had itching or irritation in the ear?",
     followUps: [],
   },
   {
     id: "tinnitus",
     label: "Tinnitus / noise in the ear",
-    initialPrompt: "Is the patient experiencing tinnitus or noise in the ear?",
+    description: "Ringing, buzzing, or whooshing sounds in the ear.",
+    initialPromptClinician: "Does the patient have tinnitus or noise in the ear?",
+    initialPromptPatient: "Have you been hearing ringing, buzzing, or noise in the ear?",
     followUps: [
       {
         id: "tinnitus_side",
         prompt: "Is the tinnitus worse in one ear?",
-        options: ["Left ear", "Right ear", "Both ears"],
+        options: ["Left ear", "Both ears", "Right ear"],
       },
     ],
   },
   {
     id: "vertigo",
     label: "Vertigo / dizziness",
-    initialPrompt: "Is the patient experiencing vertigo or dizziness?",
+    description: "A spinning sensation or dizziness.",
+    initialPromptClinician: "Does the patient have vertigo or dizziness?",
+    initialPromptPatient: "Have you been experiencing vertigo or dizziness?",
     followUps: [
       {
         id: "vertigo_duration",
@@ -162,7 +184,10 @@ const createEmptyResponses = (): EarResponses => {
   }, {} as EarResponses);
 };
 
-export const computeEarsAssessment = (events: EarAnswerEvent[]) => {
+export const computeEarsAssessment = (
+  events: EarAnswerEvent[],
+  audience: "clinician" | "patient"
+) => {
   let responses = createEmptyResponses();
   let symptomIndex = 0;
   let phase: "initial" | "followup" = "initial";
@@ -213,7 +238,11 @@ export const computeEarsAssessment = (events: EarAnswerEvent[]) => {
         symptomId: symptom.id,
         symptomLabel: symptom.label,
         questionId: `initial_${symptom.id}`,
-        prompt: symptom.initialPrompt,
+        prompt:
+          audience === "clinician"
+            ? symptom.initialPromptClinician
+            : symptom.initialPromptPatient,
+        description: symptom.description,
         options: ["Yes", "No"],
         kind: "initial",
       };
@@ -244,7 +273,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
   const hearingLoss = responses.hearing_loss;
   if (hearingLoss.present) {
     diagnoses.push({
-      title: "Usually inner ear (sensorineural) hearing loss",
+      title: "Inner ear hearing loss (sensorineural hearing loss)",
       basedOn: ["hearing_loss"],
       type: "single",
     });
@@ -274,7 +303,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
     const duration = earAche.answers.earache_duration;
     if (duration === "Recent") {
       diagnoses.push({
-        title: "Likely to be an ear infection",
+        title: "Ear infection (acute otitis media)",
         basedOn: ["earache"],
         type: "single",
       });
@@ -285,7 +314,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
       });
     } else if (duration === "Long-standing") {
       diagnoses.push({
-        title: "Unlikely to be ear-related; most commonly a jaw-joint problem",
+        title: "Jaw-joint problem (TMJ dysfunction)",
         basedOn: ["earache"],
         type: "single",
       });
@@ -300,7 +329,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
   const discharge = responses.discharge;
   if (discharge.present) {
     diagnoses.push({
-      title: "Most probably otitis externa (infection of outer ear)",
+      title: "Outer ear infection (otitis externa)",
       basedOn: ["discharge"],
       type: "single",
     });
@@ -314,7 +343,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
   const itching = responses.itching;
   if (itching.present) {
     diagnoses.push({
-      title: "Most probably otitis externa (infection of outer ear)",
+      title: "Outer ear infection (otitis externa)",
       basedOn: ["itching"],
       type: "single",
     });
@@ -328,7 +357,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
   const tinnitus = responses.tinnitus;
   if (tinnitus.present) {
     diagnoses.push({
-      title: "Probably inner ear condition",
+      title: "Inner ear condition (inner ear pathology)",
       basedOn: ["tinnitus"],
       type: "single",
     });
@@ -374,7 +403,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
       });
     } else if (duration === "Moderate (several hours)") {
       diagnoses.push({
-        title: "Menieres type",
+        title: "Meniere's disease (Menieres type)",
         basedOn: ["vertigo"],
         type: "single",
       });
@@ -385,7 +414,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
       });
     } else if (duration === "Long time (several days)") {
       diagnoses.push({
-        title: "Labyrinthitis",
+        title: "Inner ear infection (labyrinthitis)",
         basedOn: ["vertigo"],
         type: "single",
       });
@@ -404,7 +433,7 @@ const comboRules = [
   {
     id: "hearing_loss_discharge",
     symptoms: ["hearing_loss", "discharge"] as EarSymptomId[],
-    diagnosis: "Chronic middle ear infection (chronic otitis media)",
+    diagnosis: "Long-term middle ear infection (chronic otitis media)",
     expectations: [
       "Requires specialist care. For active discharge, use ear drops containing antibiotics and steroids in combination.",
     ],
@@ -486,7 +515,8 @@ const buildComboFindings = (responses: EarResponses) => {
 };
 
 export const buildEarsSummaryPayload = (
-  responses: EarResponses
+  responses: EarResponses,
+  audience: "clinician" | "patient"
 ): EarAssessmentSummaryPayload => {
   const questionsAsked: EarAssessmentSummaryPayload["questionsAsked"] = [];
   const symptomsPayload: EarAssessmentSummaryPayload["symptoms"] = [];
@@ -495,7 +525,10 @@ export const buildEarsSummaryPayload = (
   earSymptoms.forEach((symptom) => {
     const response = responses[symptom.id];
     const present = response.present === true;
-    const initialQuestion = symptom.initialPrompt;
+    const initialQuestion =
+      audience === "clinician"
+        ? symptom.initialPromptClinician
+        : symptom.initialPromptPatient;
     const initialAnswer = response.answers[`initial_${symptom.id}`] ?? "No";
 
     if (!present) {
@@ -526,6 +559,7 @@ export const buildEarsSummaryPayload = (
     symptomsPayload.push({
       id: symptom.id,
       label: symptom.label,
+      description: symptom.description,
       present,
       initialQuestion,
       initialAnswer,
