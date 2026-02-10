@@ -83,6 +83,133 @@ export default function PilotApp() {
     }
   };
 
+  const isMarkdownSeparator = (line: string) =>
+    /^\s*\|?\s*[-:]+(\s*\|\s*[-:]+)+\s*\|?\s*$/.test(line);
+
+  const parseMarkdownRow = (line: string) => {
+    let trimmed = line.trim();
+    if (trimmed.startsWith("|")) trimmed = trimmed.slice(1);
+    if (trimmed.endsWith("|")) trimmed = trimmed.slice(0, -1);
+    return trimmed.split("|").map((cell) => cell.trim());
+  };
+
+  const buildMarkdownRow = (cells: string[]) => `| ${cells.join(" | ")} |`;
+
+  const buildQuestionsTable = (data: EarAssessmentSummaryPayload) => {
+    const header = ["Symptom", "Question", "Answer"];
+    const rows: string[][] = [];
+    let prevSymptom = "";
+    data.questionsAsked.forEach((entry) => {
+      const symptomLabel = entry.symptom === prevSymptom ? "" : entry.symptom;
+      if (entry.symptom) {
+        prevSymptom = entry.symptom;
+      }
+      rows.push([symptomLabel, entry.question, entry.answer]);
+    });
+    return [
+      buildMarkdownRow(header),
+      buildMarkdownRow(header.map(() => "---")),
+      ...rows.map((row) => buildMarkdownRow(row)),
+    ].join("\n");
+  };
+
+  const injectQuestionsTable = (markdown: string, table: string) => {
+    const lines = markdown.split("\n");
+    const tableLines = table.split("\n");
+    const output: string[] = [];
+    let replaced = false;
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+      const next = lines[i + 1];
+      if (!replaced && line && next && line.includes("|") && isMarkdownSeparator(next)) {
+        output.push(...tableLines);
+        i += 2;
+        while (i < lines.length && lines[i].includes("|")) {
+          i += 1;
+        }
+        replaced = true;
+        continue;
+      }
+      output.push(line);
+      i += 1;
+    }
+
+    if (!replaced) {
+      const headingIndex = output.findIndex(
+        (row) => row.trim().toLowerCase() === "#### symptoms identified and information"
+      );
+      if (headingIndex >= 0) {
+        let insertAt = headingIndex + 1;
+        while (insertAt < output.length && output[insertAt].trim() === "") {
+          insertAt += 1;
+        }
+        if (insertAt < output.length) {
+          insertAt += 1;
+        }
+        output.splice(insertAt, 0, ...tableLines);
+      } else {
+        output.push("", ...tableLines);
+      }
+    }
+
+    return output.join("\n");
+  };
+
+  const normaliseTableSymptoms = (markdown: string) => {
+    const lines = markdown.split("\n");
+    const output: string[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+      const next = lines[i + 1];
+      if (line && next && line.includes("|") && isMarkdownSeparator(next)) {
+        const header = parseMarkdownRow(line);
+        const separator = next;
+        const rows: string[][] = [];
+        i += 2;
+        while (i < lines.length && lines[i].includes("|")) {
+          const rowCells = parseMarkdownRow(lines[i]);
+          while (rowCells.length < header.length) {
+            rowCells.push("");
+          }
+          rows.push(rowCells.slice(0, header.length));
+          i += 1;
+        }
+
+        let prevSymptom = "";
+        const processed = rows.map((row) => {
+          const symptom = row[0] ?? "";
+          if (symptom && symptom === prevSymptom) {
+            row[0] = "";
+          } else if (symptom) {
+            prevSymptom = symptom;
+          }
+          return row;
+        });
+
+        output.push(buildMarkdownRow(header));
+        output.push(separator);
+        processed.forEach((row) => output.push(buildMarkdownRow(row)));
+        continue;
+      }
+
+      output.push(line);
+      i += 1;
+    }
+
+    return output.join("\n");
+  };
+
+  const prepareSummary = (markdown: string) => {
+    if (!payload) return normaliseTableSymptoms(markdown);
+    const table = buildQuestionsTable(payload);
+    const withTable = injectQuestionsTable(markdown, table);
+    return normaliseTableSymptoms(withTable);
+  };
+
   const handleDownloadPdf = async () => {
     if (!noteRef.current || summaryState.status !== "success") return;
     setIsDownloading(true);
@@ -271,7 +398,7 @@ export default function PilotApp() {
                   ),
                 }}
               >
-                {summaryState.summary}
+                {prepareSummary(summaryState.summary)}
               </ReactMarkdown>
             </div>
           )}

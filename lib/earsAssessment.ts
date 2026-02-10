@@ -326,7 +326,7 @@ const buildSingleSymptomFindings = (responses: EarResponses) => {
   const earAche = responses.earache;
   if (earAche.present) {
     diagnoses.push({
-      title: "Earache unlikely to be ear-related; most commonly temporomandibular joint (TMJ) dysfunction",
+      title: "Jaw joint dysfunction (temporomandibular joint (TMJ) dysfunction)",
       basedOn: ["earache"],
       type: "single",
     });
