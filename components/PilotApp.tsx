@@ -69,7 +69,7 @@ export default function PilotApp() {
       });
       const data = await response.json();
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.error || "Unable to summarise.");
+        throw new Error(data?.error || "Unable to generate report.");
       }
       setSummaryState({
         status: "success",
@@ -77,7 +77,8 @@ export default function PilotApp() {
         generatedAt: new Date().toISOString(),
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error.";
+      const message =
+        error instanceof Error ? error.message : "Unknown error.";
       setSummaryState({ status: "error", error: message });
     }
   };
@@ -189,18 +190,20 @@ export default function PilotApp() {
             }
             className="rounded-full bg-[var(--color-ink)] px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {summaryState.status === "loading" ? "Summarising..." : "Summarise"}
+            {summaryState.status === "loading"
+              ? "Generating report..."
+              : "Generate Report"}
           </button>
         </div>
 
         <div
           ref={noteRef}
-          className="mt-6 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-4 text-sm text-[var(--color-muted)]"
+          className="mt-6 overflow-x-auto rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-4 text-sm text-[var(--color-muted)]"
         >
           {summaryState.status === "idle" &&
-            "Complete the assessment and click Summarise to generate a draft note."}
+            "Complete the assessment and click Generate Report to create a draft note."}
           {summaryState.status === "loading" &&
-            "Generating a structured summary for the GP."}
+            "Generating the report summary."}
           {summaryState.status === "error" && (
             <span className="text-rose-600">{summaryState.error}</span>
           )}
@@ -232,6 +235,34 @@ export default function PilotApp() {
                   ),
                   li: ({ children }) => (
                     <li className="leading-relaxed">{children}</li>
+                  ),
+                  table: ({ children }) => (
+                    <table className="mt-4 w-full border-separate border-spacing-0 text-sm text-[var(--color-ink)]">
+                      {children}
+                    </table>
+                  ),
+                  thead: ({ children }) => (
+                    <thead className="text-left text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">
+                      {children}
+                    </thead>
+                  ),
+                  tbody: ({ children }) => (
+                    <tbody className="text-[var(--color-ink-soft)]">
+                      {children}
+                    </tbody>
+                  ),
+                  tr: ({ children }) => (
+                    <tr className="align-top">{children}</tr>
+                  ),
+                  th: ({ children }) => (
+                    <th className="border border-transparent px-3 py-2 font-semibold text-[var(--color-ink)]">
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="border border-transparent px-3 py-2 align-top text-[var(--color-ink-soft)]">
+                      {children}
+                    </td>
                   ),
                 }}
               >

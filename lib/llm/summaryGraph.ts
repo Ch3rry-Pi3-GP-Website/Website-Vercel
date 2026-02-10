@@ -9,6 +9,7 @@ import { summaryRevisionPrompt } from "@/lib/llm/summaryRevisionPrompt";
 const SymptomSchema = z.object({
   id: z.string(),
   label: z.string(),
+  description: z.string(),
   present: z.boolean(),
   initialQuestion: z.string(),
   initialAnswer: z.string(),
@@ -41,6 +42,7 @@ const ExpectationSchema = z.object({
 
 export const SummaryInputSchema = z.object({
   area: z.literal("ears"),
+  audience: z.enum(["clinician", "patient"]),
   symptomOrder: z.array(z.string()),
   symptoms: z.array(SymptomSchema),
   negativeSymptoms: z.array(z.string()),
@@ -51,6 +53,7 @@ export const SummaryInputSchema = z.object({
 
 const SummaryState = new StateSchema({
   area: z.literal("ears"),
+  audience: z.enum(["clinician", "patient"]),
   symptomOrder: z.array(z.string()),
   symptoms: z.array(SymptomSchema),
   negativeSymptoms: z.array(z.string()),
@@ -67,6 +70,7 @@ const SummaryState = new StateSchema({
 
 type SummaryStateType = {
   area: "ears";
+  audience: "clinician" | "patient";
   symptomOrder: string[];
   symptoms: z.infer<typeof SymptomSchema>[];
   negativeSymptoms: string[];
@@ -85,6 +89,7 @@ const formatSummaryInput = (state: SummaryStateType) => {
   return JSON.stringify(
     {
       area: state.area,
+      audience: state.audience,
       symptomOrder: state.symptomOrder,
       symptoms: state.symptoms,
       negativeSymptoms: state.negativeSymptoms,
@@ -200,6 +205,7 @@ export type SummaryInput = z.infer<typeof SummaryInputSchema>;
 export async function generateSummary(input: SummaryInput) {
   return graph.invoke({
     area: input.area,
+    audience: input.audience,
     symptomOrder: input.symptomOrder,
     symptoms: input.symptoms,
     negativeSymptoms: input.negativeSymptoms,

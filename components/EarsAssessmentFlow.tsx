@@ -58,7 +58,7 @@ export default function EarsAssessmentFlow({
       answeredCount: events.length,
       totalQuestions,
     };
-  }, [assessment, events.length]);
+  }, [assessment, events.length, audience]);
 
   const screenedCount = useMemo(() => {
     return earSymptoms.filter(
@@ -115,11 +115,11 @@ export default function EarsAssessmentFlow({
 
       {assessment.isComplete ? (
         <div className="mt-8 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-6 text-sm text-[var(--color-muted)]">
-          Assessment complete. You can now generate the GP summary.
+          Assessment complete. You can now generate the report.
         </div>
       ) : assessment.currentStep ? (
-        <div className="mt-8 grid gap-6 lg:grid-cols-[0.4fr_0.6fr]">
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg">
+        <div className="mt-8 grid items-stretch gap-6 lg:grid-cols-[0.4fr_0.6fr]">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg h-full min-h-[320px] lg:min-h-[400px]">
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
               Current symptom
             </p>
@@ -150,7 +150,7 @@ export default function EarsAssessmentFlow({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl">
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl h-full min-h-[320px] lg:min-h-[400px]">
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
               Question
             </p>

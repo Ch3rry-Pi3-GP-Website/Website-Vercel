@@ -59,6 +59,7 @@ export type EarExpectation = {
 
 export type EarAssessmentSummaryPayload = {
   area: "ears";
+  audience: "clinician" | "patient";
   symptomOrder: string[];
   symptoms: Array<{
     id: EarSymptomId;
@@ -596,6 +597,7 @@ export const buildEarsSummaryPayload = (
 
   return {
     area: "ears",
+    audience,
     symptomOrder: earSymptomOrder,
     symptoms: symptomsPayload,
     negativeSymptoms,
