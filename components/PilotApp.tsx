@@ -236,6 +236,11 @@ export default function PilotApp() {
                   li: ({ children }) => (
                     <li className="leading-relaxed">{children}</li>
                   ),
+                  h4: ({ children }) => (
+                    <h4 className="mt-6 font-serif text-lg text-[var(--color-ink)]">
+                      {children}
+                    </h4>
+                  ),
                   table: ({ children }) => (
                     <table className="mt-4 w-full border-separate border-spacing-0 text-sm text-[var(--color-ink)]">
                       {children}
