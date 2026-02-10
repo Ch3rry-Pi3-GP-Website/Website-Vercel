@@ -34,6 +34,25 @@ flowchart LR
   llm --> openai[OpenAI]
 ```
 
+## LLM Pattern
+
+The pilot app uses a **reflexion pattern** (review‑revise loop) implemented in LangGraph:
+
+1. `summarise` drafts the Markdown clinical note.
+2. `review` validates the draft against strict formatting and content constraints.
+3. If review fails, `revise` rewrites and loops back to `review` (max 2 revisions).
+4. `finalize` returns the latest draft.
+
+This pattern is chosen to enforce consistent structure, wording, and compliance with clinical note requirements.
+
+```mermaid
+flowchart LR
+  START --> summarise
+  summarise --> review
+  review -->|pass| finalize --> END
+  review -->|fail| revise --> review
+```
+
 ## Documentation
 
 Setup and deployment notes live in `guides/setup.md`.
