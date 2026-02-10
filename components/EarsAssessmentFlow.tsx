@@ -183,19 +183,24 @@ export default function EarsAssessmentFlow({
                   </tr>
                 </thead>
                 <tbody className="text-[var(--color-ink-soft)]">
-                  {reviewRows.map((row, index) => (
-                    <tr key={`${row.symptom}-${row.question}-${index}`}>
-                      <td className="border border-transparent px-3 py-2 align-top">
-                        {row.symptom}
-                      </td>
-                      <td className="border border-transparent px-3 py-2 align-top">
-                        {row.question}
-                      </td>
-                      <td className="border border-transparent px-3 py-2 align-top font-semibold text-[var(--color-ink)]">
-                        {row.answer}
-                      </td>
-                    </tr>
-                  ))}
+                  {reviewRows.map((row, index) => {
+                    const prevSymptom =
+                      index > 0 ? reviewRows[index - 1].symptom : null;
+                    const showSymptom = row.symptom !== prevSymptom;
+                    return (
+                      <tr key={`${row.symptom}-${row.question}-${index}`}>
+                        <td className="border border-transparent px-3 py-2 align-top">
+                          {showSymptom ? row.symptom : ""}
+                        </td>
+                        <td className="border border-transparent px-3 py-2 align-top">
+                          {row.question}
+                        </td>
+                        <td className="border border-transparent px-3 py-2 align-top font-semibold text-[var(--color-ink)]">
+                          {row.answer}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
