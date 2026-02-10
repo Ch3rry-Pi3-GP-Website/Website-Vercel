@@ -66,6 +66,36 @@ export default function EarsAssessmentFlow({
     ).length;
   }, [session.responses]);
 
+  const reviewRows = useMemo(() => {
+    return earSymptoms.flatMap((symptom) => {
+      const response = assessment.responses[symptom.id];
+      const rows = [];
+      const initialQuestion =
+        audience === "clinician"
+          ? symptom.initialPromptClinician
+          : symptom.initialPromptPatient;
+      const initialAnswer =
+        response.answers[`initial_${symptom.id}`] ??
+        (response.present ? "Yes" : "No");
+      rows.push({
+        symptom: symptom.label,
+        question: initialQuestion,
+        answer: initialAnswer,
+      });
+      symptom.followUps.forEach((question) => {
+        const answer = response.answers[question.id];
+        if (answer) {
+          rows.push({
+            symptom: symptom.label,
+            question: question.prompt,
+            answer,
+          });
+        }
+      });
+      return rows;
+    });
+  }, [assessment.responses, audience]);
+
   useEffect(() => {
     if (onSessionChange) {
       onSessionChange(session);
@@ -114,8 +144,61 @@ export default function EarsAssessmentFlow({
       </div>
 
       {assessment.isComplete ? (
-        <div className="mt-8 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-6 text-sm text-[var(--color-muted)]">
-          Assessment complete. You can now generate the report.
+        <div className="mt-8 space-y-4">
+          <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-6 text-sm text-[var(--color-muted)]">
+            Assessment complete. Review your answers below before generating the report.
+          </div>
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/80 p-5 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+                  Review answers
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-muted)]">
+                  Check your responses. If anything is incorrect, restart the assessment.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleRestart}
+                className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ink)] transition"
+              >
+                Restart assessment
+              </button>
+            </div>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full border-separate border-spacing-0 text-sm text-[var(--color-ink)]">
+                <thead className="text-left text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">
+                  <tr>
+                    <th className="border border-transparent px-3 py-2 font-semibold">
+                      Symptom
+                    </th>
+                    <th className="border border-transparent px-3 py-2 font-semibold">
+                      Question
+                    </th>
+                    <th className="border border-transparent px-3 py-2 font-semibold">
+                      Answer
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="text-[var(--color-ink-soft)]">
+                  {reviewRows.map((row, index) => (
+                    <tr key={`${row.symptom}-${row.question}-${index}`}>
+                      <td className="border border-transparent px-3 py-2 align-top">
+                        {row.symptom}
+                      </td>
+                      <td className="border border-transparent px-3 py-2 align-top">
+                        {row.question}
+                      </td>
+                      <td className="border border-transparent px-3 py-2 align-top font-semibold text-[var(--color-ink)]">
+                        {row.answer}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       ) : assessment.currentStep ? (
         <div className="mt-8 grid items-stretch gap-6 lg:grid-cols-[0.4fr_0.6fr]">
