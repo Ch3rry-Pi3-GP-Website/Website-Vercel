@@ -93,11 +93,6 @@ export default function EarsAssessmentFlow({
     setEvents([]);
   };
 
-  const isSeverityQuestion =
-    assessment.currentStep?.questionId === "hearing_loss_severity";
-
-  const isBinaryQuestion = assessment.currentStep?.kind === "initial";
-
   return (
     <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -124,20 +119,18 @@ export default function EarsAssessmentFlow({
         </div>
       ) : assessment.currentStep ? (
         <div className="mt-8 grid items-stretch gap-6 lg:grid-cols-[0.4fr_0.6fr]">
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg h-[380px] lg:h-[420px] flex flex-col">
-            <div className="min-h-[120px]">
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
-                Current symptom
-              </p>
-              <p className="mt-3 text-lg font-semibold text-[var(--color-ink)]">
-                {assessment.currentStep.symptomLabel}
-              </p>
-              <p className="mt-3 text-sm text-[var(--color-muted)]">
-                {assessment.currentStep.kind === "initial"
-                  ? "Screening question"
-                  : "Follow-up question"}
-              </p>
-            </div>
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/90 p-5 shadow-lg h-full min-h-[320px] lg:min-h-[400px]">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+              Current symptom
+            </p>
+            <p className="mt-3 text-lg font-semibold text-[var(--color-ink)]">
+              {assessment.currentStep.symptomLabel}
+            </p>
+            <p className="mt-3 text-sm text-[var(--color-muted)]">
+              {assessment.currentStep.kind === "initial"
+                ? "Screening question"
+                : "Follow-up question"}
+            </p>
             <div className="mt-6 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -157,66 +150,30 @@ export default function EarsAssessmentFlow({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl h-[380px] lg:h-[420px] flex flex-col">
-            <div className="min-h-[120px]">
-              <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
-                Question
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white/95 p-6 shadow-xl h-full min-h-[320px] lg:min-h-[400px]">
+            <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
+              Question
+            </p>
+            <h4 className="mt-3 font-serif text-2xl text-[var(--color-ink)]">
+              {assessment.currentStep.prompt}
+            </h4>
+            {assessment.currentStep.description && (
+              <p className="mt-2 text-sm text-[var(--color-muted)]">
+                {assessment.currentStep.description}
               </p>
-              <h4 className="mt-3 font-serif text-2xl text-[var(--color-ink)]">
-                {assessment.currentStep.prompt}
-              </h4>
-              {assessment.currentStep.description && (
-                <p className="mt-2 text-sm text-[var(--color-muted)]">
-                  {assessment.currentStep.description}
-                </p>
-              )}
-            </div>
-            {isSeverityQuestion ? (
-              <div className="mt-4 space-y-3">
-                {assessment.currentStep.options.map((option) => {
-                  const [level, ...rest] = option.split(" - ");
-                  const detail = rest.join(" - ");
-
-                  return (
-                    <div
-                      key={option}
-                      className="flex items-center gap-4 rounded-xl border border-[var(--color-border)] bg-white/70 px-3 py-2"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleAnswer(option)}
-                        aria-label={`Select severity ${level}`}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-border)] bg-white text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
-                      >
-                        {level}
-                      </button>
-                      <span className="text-sm leading-relaxed text-[var(--color-ink-soft)]">
-                        {detail}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div
-                className={`mt-4 grid gap-3 ${
-                  isBinaryQuestion ? "grid-cols-2" : "grid-cols-1"
-                }`}
-              >
-                {assessment.currentStep.options.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => handleAnswer(option)}
-                    className={`rounded-xl border border-[var(--color-border)] bg-white/80 px-4 py-2 text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5 ${
-                      isBinaryQuestion ? "text-center" : "text-left"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
             )}
+            <div className="mt-6 grid gap-3">
+              {assessment.currentStep.options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleAnswer(option)}
+                  className="rounded-2xl border border-[var(--color-border)] bg-white/80 px-4 py-3 text-left text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       ) : null}
