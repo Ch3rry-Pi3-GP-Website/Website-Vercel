@@ -41,6 +41,8 @@ const rateLimit = (request: Request) => {
   return { allowed: true, remaining: RATE_LIMIT_MAX - record.count, resetMs: RATE_LIMIT_WINDOW_MS - (now - record.start) };
 };
 
+const SYMPTOMS_HEADING_REGEX = /^####\s*Symptoms/i;
+
 const validateSummary = (summary: string) => {
   if (summary.includes("```")) {
     return { ok: false, error: "Summary contains code fences." };
@@ -50,18 +52,23 @@ const validateSummary = (summary: string) => {
   }
 
   const requiredHeadings = [
-    "#### Symptoms identified and information",
     "#### Diagnosis",
     "#### Alternative diagnoses",
     "#### Recommended further steps",
     "#### Potential treatment options",
   ];
 
-  const firstNonEmpty = summary
-    .split(/\r?\n/)
-    .find((line) => line.trim().length > 0);
-  if (firstNonEmpty !== requiredHeadings[0]) {
+  const lines = summary.split(/\r?\n/).map((line) => line.trim());
+  const firstNonEmpty = lines.find((line) => line.length > 0);
+  if (!firstNonEmpty || !SYMPTOMS_HEADING_REGEX.test(firstNonEmpty)) {
     return { ok: false, error: "Summary must start with the Symptoms section." };
+  }
+
+  const symptomsHeadingIndex = lines.findIndex((line) =>
+    SYMPTOMS_HEADING_REGEX.test(line)
+  );
+  if (symptomsHeadingIndex === -1) {
+    return { ok: false, error: "Symptoms section heading is missing." };
   }
 
   let lastIndex = -1;
@@ -100,10 +107,12 @@ const validateSummary = (summary: string) => {
 };
 
 const normaliseSummary = (summary: string) => {
-  const heading = "#### Symptoms identified and information";
-  const idx = summary.indexOf(heading);
-  if (idx > 0) {
-    return summary.slice(idx).trim();
+  const lines = summary.split(/\r?\n/);
+  const symptomIndex = lines.findIndex((line) =>
+    SYMPTOMS_HEADING_REGEX.test(line.trim())
+  );
+  if (symptomIndex > 0) {
+    return lines.slice(symptomIndex).join("\n").trim();
   }
   return summary.trim();
 };
