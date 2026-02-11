@@ -1,10 +1,10 @@
 export default function SiteHeader() {
   const navItems = [
-    { label: "Overview", href: "/#overview" },
-    { label: "Collaboration", href: "/#collaboration" },
-    { label: "Workflow", href: "/#workflow" },
+    { label: "Overview", href: "/overview" },
+    { label: "Collaboration", href: "/collaboration" },
+    { label: "Workflow", href: "/workflow" },
     { label: "Pilot App", href: "/pilot" },
-    { label: "Governance", href: "/#governance" },
+    { label: "Governance", href: "/governance" },
   ];
 
   return (
