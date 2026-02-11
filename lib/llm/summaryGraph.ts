@@ -17,28 +17,28 @@ const SymptomSchema = z.object({
     z.object({
       question: z.string(),
       answer: z.string(),
-    })
+    }).strict()
   ),
-});
+}).strict();
 
 const QuestionAskedSchema = z.object({
   symptom: z.string(),
   question: z.string(),
   answer: z.string(),
   type: z.enum(["initial", "followup"]),
-});
+}).strict();
 
 const DiagnosisSchema = z.object({
   title: z.string(),
   basedOn: z.array(z.string()),
   type: z.enum(["single", "combo"]),
-});
+}).strict();
 
 const ExpectationSchema = z.object({
   text: z.string(),
   basedOn: z.array(z.string()),
   type: z.enum(["single", "combo"]),
-});
+}).strict();
 
 export const SummaryInputSchema = z.object({
   area: z.literal("ears"),
@@ -50,7 +50,7 @@ export const SummaryInputSchema = z.object({
   diagnoses: z.array(DiagnosisSchema),
   expectations: z.array(ExpectationSchema),
   alternateDiagnoses: z.array(z.string()),
-});
+}).strict();
 
 const SummaryState = new StateSchema({
   area: z.literal("ears"),

@@ -14,6 +14,8 @@ This repository contains the marketing site and the pilot application for GP Dia
 - AI summary generation (Markdown) with `gpt-4o-mini`
 - PDF export of the clinical note (client-side)
 - Voice shortcut to select ears / nose / throat+neck pathways
+- Rate-limited summary endpoint with strict validation and output guardrails
+- Security headers for baseline hardening
 
 ## Tech Stack
 
@@ -52,6 +54,13 @@ flowchart LR
   review -->|pass| finalize --> END
   review -->|fail| revise --> review
 ```
+
+## Security & Guardrails
+
+- Rate limiting on `POST /api/summary` to reduce abuse and unexpected costs.
+- Request size limits and strict Zod validation on incoming summary payloads.
+- Post-generation validation to ensure the summary respects required structure.
+- Security headers (CSP, HSTS, frame busting, referrer policy, etc.).
 
 ## Documentation
 
