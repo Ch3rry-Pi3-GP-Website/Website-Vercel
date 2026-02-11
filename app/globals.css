@@ -21,13 +21,11 @@
 
 html {
   scroll-behavior: smooth;
-  height: 100%;
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
 body {
-  min-height: 100%;
   background: var(--color-shell);
   color: var(--color-ink);
   font-family: var(--font-ibm-plex), system-ui, sans-serif;
