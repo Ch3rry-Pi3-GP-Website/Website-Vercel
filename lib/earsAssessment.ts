@@ -176,12 +176,19 @@ export const earSymptomOrder = earSymptoms.map((symptom) => symptom.label);
 
 const symptomDiagnosisOptions: Record<EarSymptomId, string[]> = {
   hearing_loss: ["Inner ear hearing loss (sensorineural hearing loss)"],
-  earache: ["Referred pain from other head/neck structures (referred otalgia)"],
+  earache: ["Pain referred from other head/neck structures (referred otalgia)"],
   discharge: ["Outer ear infection (otitis externa)"],
   itching: ["Outer ear infection (otitis externa)"],
   tinnitus: ["Inner ear condition (inner ear pathology)"],
-  vertigo: ["Benign positional vertigo (BPV)", "Meniere's disease (Menieres type)", "Inner ear infection (labyrinthitis)"],
+  vertigo: [
+    "Benign positional vertigo (BPV)",
+    "Meniere's disease (Menieres type)",
+    "Inner ear infection (labyrinthitis)",
+  ],
 };
+
+const EARACHE_ALTERNATIVE_DIAGNOSIS =
+  "Pain referred from other head/neck structures (referred otalgia)";
 
 const lateralityQuestionIds = new Set([
   "hearing_loss_side",
@@ -634,6 +641,13 @@ export const buildEarsSummaryPayload = (
       alternateDiagnosesSet.add(rule.diagnosis);
     }
   });
+
+  const hasJawJointDiagnosis = diagnoses.some((diagnosis) =>
+    diagnosis.title.includes("Jaw joint dysfunction")
+  );
+  if (responses.earache.present && hasJawJointDiagnosis) {
+    alternateDiagnosesSet.add(EARACHE_ALTERNATIVE_DIAGNOSIS);
+  }
 
   const alternateDiagnoses = Array.from(alternateDiagnosesSet);
 
