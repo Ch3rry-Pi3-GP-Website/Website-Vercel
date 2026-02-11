@@ -21,14 +21,18 @@
 
 html {
   scroll-behavior: smooth;
+  height: 100%;
   overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 body {
+  min-height: 100%;
   background: var(--color-shell);
   color: var(--color-ink);
   font-family: var(--font-ibm-plex), system-ui, sans-serif;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 @keyframes fade-in-up {
