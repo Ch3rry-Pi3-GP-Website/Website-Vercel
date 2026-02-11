@@ -125,7 +125,7 @@ export default function EarsAssessmentFlow({
   };
 
   return (
-    <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur">
+    <div className="rounded-3xl border border-[var(--color-border)] bg-white/90 p-6 shadow-2xl shadow-slate-200/70">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
@@ -167,8 +167,8 @@ export default function EarsAssessmentFlow({
                 Restart assessment
               </button>
             </div>
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full border-separate border-spacing-0 text-sm text-[var(--color-ink)]">
+            <div className="mt-4">
+              <table className="w-full table-fixed border-separate border-spacing-0 text-sm text-[var(--color-ink)]">
                 <thead className="text-left text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">
                   <tr>
                     <th className="border border-transparent px-3 py-2 font-semibold">
@@ -189,13 +189,13 @@ export default function EarsAssessmentFlow({
                     const showSymptom = row.symptom !== prevSymptom;
                     return (
                       <tr key={`${row.symptom}-${row.question}-${index}`}>
-                        <td className="border border-transparent px-3 py-2 align-top">
+                        <td className="border border-transparent px-3 py-2 align-top break-words whitespace-normal">
                           {showSymptom ? row.symptom : ""}
                         </td>
-                        <td className="border border-transparent px-3 py-2 align-top">
+                        <td className="border border-transparent px-3 py-2 align-top break-words whitespace-normal">
                           {row.question}
                         </td>
-                        <td className="border border-transparent px-3 py-2 align-top font-semibold text-[var(--color-ink)]">
+                        <td className="border border-transparent px-3 py-2 align-top font-semibold text-[var(--color-ink)] break-words whitespace-normal">
                           {row.answer}
                         </td>
                       </tr>

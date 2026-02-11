@@ -163,7 +163,7 @@ export default function DecisionFlow({ onSessionChange }: DecisionFlowProps) {
   };
 
   return (
-    <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur">
+    <div className="rounded-3xl border border-[var(--color-border)] bg-white/90 p-6 shadow-2xl shadow-slate-200/70">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">

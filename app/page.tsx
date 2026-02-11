@@ -13,8 +13,8 @@ export default function Home() {
       <div className="relative overflow-x-hidden">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(26,163,160,0.35),transparent_65%)] blur-3xl" />
-          <div className="absolute right-[-120px] top-20 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(11,31,51,0.22),transparent_70%)] blur-3xl animate-[drift_18s_ease-in-out_infinite]" />
-          <div className="absolute bottom-[-140px] left-[-120px] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(215,238,240,0.9),transparent_70%)] blur-3xl animate-[drift_16s_ease-in-out_infinite]" />
+          <div className="absolute right-[-120px] top-20 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(11,31,51,0.22),transparent_70%)] blur-3xl" />
+          <div className="absolute bottom-[-140px] left-[-120px] h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(215,238,240,0.9),transparent_70%)] blur-3xl" />
         </div>
 
         <div className="relative mx-auto max-w-6xl px-6 pb-24 pt-10">
@@ -41,7 +41,7 @@ export default function Home() {
                   Request pilot access
                 </button>
                 <button
-                  className="rounded-full border border-[var(--color-border)] bg-white/80 px-5 py-3 text-sm font-semibold text-[var(--color-ink)] shadow-sm backdrop-blur transition hover:-translate-y-0.5"
+                  className="rounded-full border border-[var(--color-border)] bg-white/90 px-5 py-3 text-sm font-semibold text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5"
                   type="button"
                 >
                   Clinical validation brief

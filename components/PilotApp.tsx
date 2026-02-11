@@ -247,7 +247,7 @@ export default function PilotApp() {
 
   return (
     <div className="space-y-10">
-      <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 shadow-2xl shadow-slate-200/70 backdrop-blur">
+      <div className="rounded-3xl border border-[var(--color-border)] bg-white/90 p-6 shadow-2xl shadow-slate-200/70">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-muted)]">
@@ -325,7 +325,7 @@ export default function PilotApp() {
 
         <div
           ref={noteRef}
-          className="mt-6 overflow-x-auto rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-4 text-sm text-[var(--color-muted)]"
+          className="mt-6 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-shell)] p-4 text-sm text-[var(--color-muted)]"
         >
           {summaryState.status === "idle" &&
             "Complete the assessment and click Generate Report to create a draft note."}
@@ -369,7 +369,7 @@ export default function PilotApp() {
                     </h4>
                   ),
                   table: ({ children }) => (
-                    <table className="mt-4 w-full border-separate border-spacing-0 text-sm text-[var(--color-ink)]">
+                    <table className="mt-4 w-full table-fixed border-separate border-spacing-0 text-sm text-[var(--color-ink)]">
                       {children}
                     </table>
                   ),
@@ -387,12 +387,12 @@ export default function PilotApp() {
                     <tr className="align-top">{children}</tr>
                   ),
                   th: ({ children }) => (
-                    <th className="border border-transparent px-3 py-2 font-semibold text-[var(--color-ink)]">
+                    <th className="border border-transparent px-3 py-2 font-semibold text-[var(--color-ink)] break-words whitespace-normal">
                       {children}
                     </th>
                   ),
                   td: ({ children }) => (
-                    <td className="border border-transparent px-3 py-2 align-top text-[var(--color-ink-soft)]">
+                    <td className="border border-transparent px-3 py-2 align-top text-[var(--color-ink-soft)] break-words whitespace-normal">
                       {children}
                     </td>
                   ),

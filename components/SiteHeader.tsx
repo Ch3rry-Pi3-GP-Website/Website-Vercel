@@ -35,7 +35,7 @@ export default function SiteHeader() {
         ))}
       </nav>
       <a
-        className="hidden rounded-full border border-[var(--color-border)] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ink)] shadow-sm backdrop-blur transition hover:-translate-y-0.5 md:inline-flex"
+        className="hidden rounded-full border border-[var(--color-border)] bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ink)] shadow-sm transition hover:-translate-y-0.5 md:inline-flex"
         href="/pilot"
       >
         Pilot App
