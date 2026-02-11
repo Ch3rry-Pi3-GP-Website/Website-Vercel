@@ -21,6 +21,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -28,6 +29,7 @@ body {
   background: var(--color-shell);
   color: var(--color-ink);
   font-family: var(--font-ibm-plex), system-ui, sans-serif;
+  overflow-x: hidden;
 }
 
 @keyframes fade-in-up {
