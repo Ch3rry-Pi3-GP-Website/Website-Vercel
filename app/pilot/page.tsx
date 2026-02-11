@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function PilotPage() {
   return (
     <div className="min-h-screen bg-[var(--color-shell)] text-[var(--color-ink)]">
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-x-hidden">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(26,163,160,0.35),transparent_65%)] blur-3xl" />
           <div className="absolute right-[-120px] top-20 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(11,31,51,0.22),transparent_70%)] blur-3xl animate-[drift_18s_ease-in-out_infinite]" />

@@ -52,7 +52,7 @@ const badges = [
 export default function Home() {
   return (
     <div className="min-h-screen bg-[var(--color-shell)] text-[var(--color-ink)]">
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-x-hidden">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(26,163,160,0.35),transparent_65%)] blur-3xl" />
           <div className="absolute right-[-120px] top-20 h-[360px] w-[360px] rounded-full bg-[radial-gradient(circle_at_center,rgba(11,31,51,0.22),transparent_70%)] blur-3xl animate-[drift_18s_ease-in-out_infinite]" />
@@ -140,7 +140,7 @@ export default function Home() {
             </div>
           </section>
 
-          <section id="overview" className="mt-24">
+          <section id="overview" className="mt-24 scroll-mt-24">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-accent-strong)]">
@@ -181,7 +181,7 @@ export default function Home() {
 
           <section
             id="collaboration"
-            className="mt-24 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]"
+            className="mt-24 scroll-mt-24 grid gap-8 lg:grid-cols-[1.2fr_0.8fr]"
           >
             <div className="rounded-3xl bg-[var(--color-ink)] p-8 text-white shadow-2xl">
               <p className="text-xs uppercase tracking-[0.3em] text-teal-200">
@@ -246,7 +246,7 @@ export default function Home() {
             </div>
           </section>
 
-          <section id="workflow" className="mt-24">
+          <section id="workflow" className="mt-24 scroll-mt-24">
             <div className="flex flex-wrap items-end justify-between gap-6">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-accent-strong)]">
@@ -282,7 +282,7 @@ export default function Home() {
             </div>
           </section>
 
-          <section id="governance" className="mt-24">
+          <section id="governance" className="mt-24 scroll-mt-24">
             <div className="rounded-3xl border border-[var(--color-border)] bg-white/90 p-8 shadow-xl shadow-slate-200/70">
               <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
                 <div>

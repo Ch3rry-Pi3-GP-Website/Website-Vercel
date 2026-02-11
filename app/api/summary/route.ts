@@ -99,6 +99,15 @@ const validateSummary = (summary: string) => {
   return { ok: true as const };
 };
 
+const normaliseSummary = (summary: string) => {
+  const heading = "#### Symptoms identified and information";
+  const idx = summary.indexOf(heading);
+  if (idx > 0) {
+    return summary.slice(idx).trim();
+  }
+  return summary.trim();
+};
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -156,22 +165,35 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await generateSummary(parsed.data);
-    const summary = result.summary ?? "";
-    if (!summary) {
-      return NextResponse.json(
-        { ok: false, error: "Summary generation failed." },
-        { status: 500 }
-      );
+    const generateWithValidation = async () => {
+      const result = await generateSummary(parsed.data);
+      const summary = normaliseSummary(result.summary ?? "");
+      if (!summary) {
+        return {
+          ok: false,
+          error: "Summary generation failed.",
+          summary: "",
+        };
+      }
+      const summaryValidation = validateSummary(summary);
+      if (!summaryValidation.ok) {
+        return { ok: false, error: summaryValidation.error, summary };
+      }
+      return { ok: true, summary, error: "" };
+    };
+
+    const firstAttempt = await generateWithValidation();
+    if (!firstAttempt.ok) {
+      const secondAttempt = await generateWithValidation();
+      if (!secondAttempt.ok) {
+        return NextResponse.json(
+          { ok: false, error: secondAttempt.error || firstAttempt.error },
+          { status: 422 }
+        );
+      }
+      return NextResponse.json({ ok: true, summary: secondAttempt.summary });
     }
-    const summaryValidation = validateSummary(summary);
-    if (!summaryValidation.ok) {
-      return NextResponse.json(
-        { ok: false, error: summaryValidation.error },
-        { status: 422 }
-      );
-    }
-    return NextResponse.json({ ok: true, summary });
+    return NextResponse.json({ ok: true, summary: firstAttempt.summary });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error.";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
