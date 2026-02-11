@@ -42,6 +42,7 @@ const rateLimit = (request: Request) => {
 };
 
 const SYMPTOMS_HEADING_REGEX = /^####\s*Symptoms/i;
+const ALT_DIAGNOSIS_HEADING = "#### Alternative diagnoses";
 
 const validateSummary = (summary: string) => {
   if (summary.includes("```")) {
@@ -117,6 +118,26 @@ const normaliseSummary = (summary: string) => {
   return summary.trim();
 };
 
+const buildAlternativeDiagnosesText = (alternatives: string[]) => {
+  if (alternatives.length === 0) {
+    return "No other possible diagnoses were suggested by the logic. A proper consultation is required to confirm the diagnosis.";
+  }
+  const list = alternatives.join(", ");
+  return `Other possible diagnoses include ${list}. A proper consultation is required to confirm the diagnosis.`;
+};
+
+const enforceAlternativeDiagnosesSection = (
+  summary: string,
+  alternatives: string[]
+) => {
+  const replacement = buildAlternativeDiagnosesText(alternatives);
+  const regex = /(#### Alternative diagnoses\s*)([\s\S]*?)(?=^####\s|\s*$)/m;
+  if (!regex.test(summary)) {
+    return summary;
+  }
+  return summary.replace(regex, `$1\n${replacement}\n\n`);
+};
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -176,7 +197,11 @@ export async function POST(request: Request) {
 
     const generateWithValidation = async () => {
       const result = await generateSummary(parsed.data);
-      const summary = normaliseSummary(result.summary ?? "");
+      let summary = normaliseSummary(result.summary ?? "");
+      summary = enforceAlternativeDiagnosesSection(
+        summary,
+        parsed.data.alternateDiagnoses ?? []
+      );
       if (!summary) {
         return {
           ok: false,
