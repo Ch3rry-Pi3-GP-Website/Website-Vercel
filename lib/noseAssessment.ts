@@ -30,14 +30,14 @@ export type NoseSymptomResponse = {
 export type NoseResponses = Record<NoseSymptomId, NoseSymptomResponse>;
 
 export type NoseAnswerEvent = {
-  symptomId: NoseSymptomId | "shared";
+  symptomId: NoseSymptomId;
   questionId: string;
   kind: "initial" | "followup";
   value: string;
 };
 
 export type NoseQuestionStep = {
-  symptomId: NoseSymptomId | "shared";
+  symptomId: NoseSymptomId;
   symptomLabel: string;
   questionId: string;
   prompt: string;
@@ -91,12 +91,28 @@ export type NoseAssessmentSummaryPayload = {
   reviewAndNextSteps: NoseReviewAndNextSteps;
 };
 
-const SHARED_DURATION_PROMPT_CLINICIAN =
-  "Have one or more of these symptoms persisted for more than 2 months?";
-const SHARED_DURATION_PROMPT_PATIENT =
-  "Have one or more of these symptoms persisted for more than 2 months?";
-const SHARED_DURATION_QUESTION_ID = "shared_duration_over_2_months";
 const EPISTAXIS_AGE_QUESTION_ID = "epistaxis_age_band";
+
+const sharedSymptomIds: NoseSymptomId[] = [
+  "facial_pain",
+  "nasal_obstruction",
+  "sneezing",
+  "running_discharge",
+  "anosmia",
+];
+
+const getDurationQuestionId = (symptomId: NoseSymptomId) =>
+  `${symptomId}_duration_over_2_months`;
+
+const isYesAnswer = (value: string | undefined) =>
+  (value ?? "").toLowerCase().startsWith("y");
+
+const buildDurationFollowup = (symptomId: NoseSymptomId): NoseQuestion => ({
+  id: getDurationQuestionId(symptomId),
+  promptClinician: "Has this symptom persisted for more than 2 months?",
+  promptPatient: "Has this symptom persisted for more than 2 months?",
+  options: ["Yes", "No"],
+});
 
 export const noseSymptoms: NoseSymptomDefinition[] = [
   {
@@ -120,7 +136,7 @@ export const noseSymptoms: NoseSymptomDefinition[] = [
     description: "Pain or pressure in the face.",
     initialPromptClinician: "Does the patient have facial pain?",
     initialPromptPatient: "Have you been experiencing facial pain?",
-    followUps: [],
+    followUps: [buildDurationFollowup("facial_pain")],
   },
   {
     id: "nasal_obstruction",
@@ -128,7 +144,7 @@ export const noseSymptoms: NoseSymptomDefinition[] = [
     description: "Blocked or obstructed nasal airflow.",
     initialPromptClinician: "Does the patient have nasal obstruction?",
     initialPromptPatient: "Have you had nasal obstruction?",
-    followUps: [],
+    followUps: [buildDurationFollowup("nasal_obstruction")],
   },
   {
     id: "sneezing",
@@ -136,7 +152,7 @@ export const noseSymptoms: NoseSymptomDefinition[] = [
     description: "Frequent or troublesome sneezing.",
     initialPromptClinician: "Does the patient have troublesome sneezing?",
     initialPromptPatient: "Have you had troublesome sneezing?",
-    followUps: [],
+    followUps: [buildDurationFollowup("sneezing")],
   },
   {
     id: "running_discharge",
@@ -144,7 +160,7 @@ export const noseSymptoms: NoseSymptomDefinition[] = [
     description: "Persistent runny nose or nasal discharge.",
     initialPromptClinician: "Does the patient have running/discharge from the nose?",
     initialPromptPatient: "Have you had running/discharge from the nose?",
-    followUps: [],
+    followUps: [buildDurationFollowup("running_discharge")],
   },
   {
     id: "anosmia",
@@ -152,18 +168,9 @@ export const noseSymptoms: NoseSymptomDefinition[] = [
     description: "Reduced or absent sense of smell.",
     initialPromptClinician:
       "Does the patient have loss of sense of smell (anosmia)?",
-    initialPromptPatient:
-      "Have you had loss of sense of smell (anosmia)?",
-    followUps: [],
+    initialPromptPatient: "Have you had loss of sense of smell (anosmia)?",
+    followUps: [buildDurationFollowup("anosmia")],
   },
-];
-
-const sharedSymptomIds: NoseSymptomId[] = [
-  "facial_pain",
-  "nasal_obstruction",
-  "sneezing",
-  "running_discharge",
-  "anosmia",
 ];
 
 export const noseSymptomOrder = noseSymptoms.map((symptom) => symptom.label);
@@ -193,12 +200,29 @@ const getFollowupPrompt = (
     : question.promptPatient;
 };
 
+const getPathway = (
+  responses: NoseResponses
+): NoseAssessmentSummaryPayload["pathway"] => {
+  if (responses.epistaxis.present) {
+    return "epistaxis";
+  }
+
+  const positiveShared = sharedSymptomIds.filter((id) => responses[id].present);
+  if (positiveShared.length === 0) {
+    return "none";
+  }
+
+  const hasChronic = positiveShared.some((id) =>
+    isYesAnswer(responses[id].answers[getDurationQuestionId(id)])
+  );
+  return hasChronic ? "chronic_rhinopathy" : "short_duration";
+};
+
 export const computeNoseAssessment = (
   events: NoseAnswerEvent[],
   audience: "clinician" | "patient"
 ) => {
   const responses = createEmptyResponses();
-  let sharedDurationAnswer: string | null = null;
   let phase:
     | "epistaxis_initial"
     | "epistaxis_age"
@@ -207,13 +231,22 @@ export const computeNoseAssessment = (
     | "complete" = "epistaxis_initial";
   let sharedIndex = 0;
 
+  const advanceShared = () => {
+    if (sharedIndex + 1 < sharedSymptomIds.length) {
+      sharedIndex += 1;
+      phase = "shared_initial";
+      return;
+    }
+    phase = "complete";
+  };
+
   for (const event of events) {
     if (phase === "complete") break;
 
     if (phase === "epistaxis_initial") {
-      const isYes = event.value.toLowerCase().startsWith("y");
+      const isYes = isYesAnswer(event.value);
       responses.epistaxis.present = isYes;
-      responses.epistaxis.answers[`initial_epistaxis`] = event.value;
+      responses.epistaxis.answers.initial_epistaxis = event.value;
       phase = isYes ? "epistaxis_age" : "shared_initial";
       continue;
     }
@@ -226,23 +259,21 @@ export const computeNoseAssessment = (
 
     if (phase === "shared_initial") {
       const symptomId = sharedSymptomIds[sharedIndex];
-      const isYes = event.value.toLowerCase().startsWith("y");
+      const isYes = isYesAnswer(event.value);
       responses[symptomId].present = isYes;
       responses[symptomId].answers[`initial_${symptomId}`] = event.value;
-      if (sharedIndex + 1 < sharedSymptomIds.length) {
-        sharedIndex += 1;
+      if (isYes) {
+        phase = "shared_duration";
       } else {
-        const hasSharedPositive = sharedSymptomIds.some(
-          (id) => responses[id].present
-        );
-        phase = hasSharedPositive ? "shared_duration" : "complete";
+        advanceShared();
       }
       continue;
     }
 
     if (phase === "shared_duration") {
-      sharedDurationAnswer = event.value;
-      phase = "complete";
+      const symptomId = sharedSymptomIds[sharedIndex];
+      responses[symptomId].answers[getDurationQuestionId(symptomId)] = event.value;
+      advanceShared();
     }
   }
 
@@ -285,47 +316,34 @@ export const computeNoseAssessment = (
         kind: "initial",
       };
     } else if (phase === "shared_duration") {
+      const symptomId = sharedSymptomIds[sharedIndex];
+      const symptom = noseSymptoms.find((entry) => entry.id === symptomId)!;
+      const question = symptom.followUps[0];
       currentStep = {
-        symptomId: "shared",
-        symptomLabel: "Shared nasal symptoms",
-        questionId: SHARED_DURATION_QUESTION_ID,
-        prompt:
-          audience === "clinician"
-            ? SHARED_DURATION_PROMPT_CLINICIAN
-            : SHARED_DURATION_PROMPT_PATIENT,
-        options: ["Yes", "No"],
+        symptomId: symptom.id,
+        symptomLabel: symptom.label,
+        questionId: question.id,
+        prompt: getFollowupPrompt(question, audience),
+        options: question.options,
         kind: "followup",
       };
     }
   }
 
-  const pathway = responses.epistaxis.present
-    ? "epistaxis"
-    : sharedSymptomIds.some((id) => responses[id].present)
-      ? sharedDurationAnswer?.toLowerCase().startsWith("y")
-        ? "chronic_rhinopathy"
-        : sharedDurationAnswer
-          ? "short_duration"
-          : "none"
-      : "none";
-
   return {
     responses,
-    sharedDurationAnswer,
     currentStep,
     isComplete,
-    pathway,
+    pathway: getPathway(responses),
   };
 };
 
-const buildFindings = (
-  responses: NoseResponses,
-  sharedDurationAnswer: string | null
-) => {
+const buildFindings = (responses: NoseResponses) => {
   const diagnoses: NoseDiagnosis[] = [];
   const expectations: NoseExpectation[] = [];
   const alternateDiagnoses: string[] = [];
-  let pathway: NoseAssessmentSummaryPayload["pathway"] = "none";
+  const pathway = getPathway(responses);
+
   let reviewAndNextSteps: NoseReviewAndNextSteps = {
     summary: "No active nose pathway was triggered by the responses.",
     resolved: [
@@ -336,8 +354,7 @@ const buildFindings = (
     ],
   };
 
-  if (responses.epistaxis.present) {
-    pathway = "epistaxis";
+  if (pathway === "epistaxis") {
     diagnoses.push({
       title: "Recurrent nosebleeds (epistaxis)",
       basedOn: ["epistaxis"],
@@ -402,8 +419,15 @@ const buildFindings = (
     };
   }
 
-  const sharedPositive = sharedSymptomIds.filter((id) => responses[id].present);
-  if (sharedPositive.length === 0) {
+  const positiveShared = sharedSymptomIds.filter((id) => responses[id].present);
+  const chronicSymptoms = positiveShared.filter((id) =>
+    isYesAnswer(responses[id].answers[getDurationQuestionId(id)])
+  );
+  const shortSymptoms = positiveShared.filter(
+    (id) => !chronicSymptoms.includes(id)
+  );
+
+  if (pathway === "none") {
     diagnoses.push({
       title: "No active nasal symptom pattern (no active rhinopathy pattern)",
       basedOn: [],
@@ -423,32 +447,31 @@ const buildFindings = (
     };
   }
 
-  if (sharedDurationAnswer?.toLowerCase().startsWith("y")) {
-    pathway = "chronic_rhinopathy";
+  if (pathway === "chronic_rhinopathy") {
     diagnoses.push({
-      title: "Persistent nasal symptoms (chronic rhinopathy)",
-      basedOn: sharedPositive,
+      title: "Persistent nasal symptom pattern (chronic rhinopathy)",
+      basedOn: chronicSymptoms.length > 0 ? chronicSymptoms : positiveShared,
       type: "combo",
     });
     expectations.push(
       {
         text: "Oral prednisolone (a steroid) 30 mg daily for 5 days.",
-        basedOn: sharedPositive,
+        basedOn: positiveShared,
         type: "combo",
       },
       {
         text: "Clarithromycin 250 mg twice daily for 2 weeks.",
-        basedOn: sharedPositive,
+        basedOn: positiveShared,
         type: "combo",
       },
       {
         text: "Flixonase nasules (steroid nose drops) twice daily for 4 weeks.",
-        basedOn: sharedPositive,
+        basedOn: positiveShared,
         type: "combo",
       },
       {
         text: "Nasonex (or equivalent nasal steroid spray) to continue for at least 3 months, ideally until specialist review.",
-        basedOn: sharedPositive,
+        basedOn: positiveShared,
         type: "combo",
       }
     );
@@ -458,6 +481,11 @@ const buildFindings = (
       "Environmental irritant sensitivity (non-allergic rhinitis)",
       "Structural nasal disorder (structural rhinopathy)"
     );
+    if (shortSymptoms.length > 0) {
+      alternateDiagnoses.push(
+        "Concurrent short-duration nasal symptom pattern (acute self-limiting rhinopathy)"
+      );
+    }
     reviewAndNextSteps = {
       summary:
         "Depending on response to treatment, classify the pathway as resolved or unresolved.",
@@ -478,30 +506,27 @@ const buildFindings = (
     };
   }
 
-  pathway = "short_duration";
   diagnoses.push({
-    title: "Short-duration nasal symptoms (acute self-limiting rhinopathy)",
-    basedOn: sharedPositive,
+    title: "Short-duration nasal symptom pattern (acute self-limiting rhinopathy)",
+    basedOn: shortSymptoms.length > 0 ? shortSymptoms : positiveShared,
     type: "combo",
   });
   expectations.push(
     {
       text: "No immediate medical treatment is usually required if symptoms have been present for less than 2 months.",
-      basedOn: sharedPositive,
+      basedOn: positiveShared,
       type: "combo",
     },
     {
       text: "Advise GP review if symptoms persist beyond 2 months.",
-      basedOn: sharedPositive,
+      basedOn: positiveShared,
       type: "combo",
     }
   );
   reviewAndNextSteps = {
     summary:
       "Use follow-up to confirm whether symptoms settle or continue beyond the short-duration phase.",
-    resolved: [
-      "If symptoms settle, no further treatment is typically needed.",
-    ],
+    resolved: ["If symptoms settle, no further treatment is typically needed."],
     unresolved: [
       "If symptoms persist for more than 2 months, reassess for chronic rhinopathy and initiate the chronic pathway.",
     ],
@@ -518,7 +543,6 @@ const buildFindings = (
 
 export const buildNoseSummaryPayload = (
   responses: NoseResponses,
-  sharedDurationAnswer: string | null,
   audience: "clinician" | "patient"
 ): NoseAssessmentSummaryPayload => {
   const symptomsPayload: NoseAssessmentSummaryPayload["symptoms"] = [];
@@ -569,19 +593,7 @@ export const buildNoseSummaryPayload = (
     });
   });
 
-  if (sharedDurationAnswer) {
-    questionsAsked.push({
-      symptom: "Shared nasal symptoms",
-      question:
-        audience === "clinician"
-          ? SHARED_DURATION_PROMPT_CLINICIAN
-          : SHARED_DURATION_PROMPT_PATIENT,
-      answer: sharedDurationAnswer,
-      type: "followup",
-    });
-  }
-
-  const findings = buildFindings(responses, sharedDurationAnswer);
+  const findings = buildFindings(responses);
 
   return {
     area: "nose",

@@ -29,11 +29,14 @@ The responses show a persistent nasal symptom pattern requiring structured manag
 | --- | --- | --- |
 | Nose bleeds (epistaxis) | Have you had nose bleeds (epistaxis)? | No |
 | Facial pain | Have you been experiencing facial pain? | Yes |
+|  | Has this symptom persisted for more than 2 months? | Yes |
 | Nasal obstruction | Have you had nasal obstruction? | Yes |
+|  | Has this symptom persisted for more than 2 months? | Yes |
 | Sneezing | Have you had troublesome sneezing? | Yes |
+|  | Has this symptom persisted for more than 2 months? | Yes |
 | Running/discharge | Have you had running/discharge from the nose? | Yes |
+|  | Has this symptom persisted for more than 2 months? | Yes |
 | Loss of sense of smell (anosmia) | Have you had loss of sense of smell (anosmia)? | No |
-| Shared nasal symptoms | Have one or more of these symptoms persisted for more than 2 months? | Yes |
 
 #### Diagnosis
 Based on your answers to the questions, the most likely diagnosis is persistent nasal symptoms (chronic rhinopathy).

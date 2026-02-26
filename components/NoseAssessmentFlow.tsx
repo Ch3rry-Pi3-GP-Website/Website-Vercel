@@ -16,7 +16,6 @@ export type NoseAssessmentSession = {
   responses: NoseResponses;
   isComplete: boolean;
   currentStep: NoseQuestionStep | null;
-  sharedDurationAnswer: string | null;
   summaryPayload: NoseAssessmentSummaryPayload | null;
   answeredCount: number;
   totalQuestions: number;
@@ -27,7 +26,7 @@ type NoseAssessmentFlowProps = {
   onSessionChange?: (session: NoseAssessmentSession) => void;
 };
 
-const MAX_QUESTIONS = 8;
+const MAX_QUESTIONS = 11;
 
 export default function NoseAssessmentFlow({
   audience,
@@ -42,18 +41,13 @@ export default function NoseAssessmentFlow({
 
   const session = useMemo<NoseAssessmentSession>(() => {
     const summaryPayload = assessment.isComplete
-      ? buildNoseSummaryPayload(
-          assessment.responses,
-          assessment.sharedDurationAnswer,
-          audience
-        )
+      ? buildNoseSummaryPayload(assessment.responses, audience)
       : null;
     return {
       area: "nose",
       responses: assessment.responses,
       isComplete: assessment.isComplete,
       currentStep: assessment.currentStep,
-      sharedDurationAnswer: assessment.sharedDurationAnswer,
       summaryPayload,
       answeredCount: events.length,
       totalQuestions: MAX_QUESTIONS,
