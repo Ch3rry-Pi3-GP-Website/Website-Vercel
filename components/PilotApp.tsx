@@ -9,7 +9,11 @@ import AreaSelector from "@/components/AreaSelector";
 import EarsAssessmentFlow, {
   type EarAssessmentSession,
 } from "@/components/EarsAssessmentFlow";
+import NoseAssessmentFlow, {
+  type NoseAssessmentSession,
+} from "@/components/NoseAssessmentFlow";
 import type { EarAssessmentSummaryPayload } from "@/lib/earsAssessment";
+import type { NoseAssessmentSummaryPayload } from "@/lib/noseAssessment";
 
 type SummaryState = {
   status: "idle" | "loading" | "success" | "error";
@@ -21,7 +25,9 @@ type SummaryState = {
 export default function PilotApp() {
   const [area, setArea] = useState<"ears" | "nose" | "throat">("ears");
   const [audience, setAudience] = useState<"clinician" | "patient">("patient");
-  const [session, setSession] = useState<EarAssessmentSession | null>(null);
+  const [session, setSession] = useState<
+    EarAssessmentSession | NoseAssessmentSession | null
+  >(null);
   const [summaryState, setSummaryState] = useState<SummaryState>({
     status: "idle",
   });
@@ -29,15 +35,15 @@ export default function PilotApp() {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const noteRef = useRef<HTMLDivElement | null>(null);
 
-  const payload = useMemo<EarAssessmentSummaryPayload | null>(
+  const payload = useMemo<
+    EarAssessmentSummaryPayload | NoseAssessmentSummaryPayload | null
+  >(
     () => session?.summaryPayload ?? null,
     [session]
   );
 
   useEffect(() => {
-    if (area !== "ears") {
-      setSession(null);
-    }
+    setSession(null);
   }, [area]);
 
   useEffect(() => {
@@ -95,7 +101,9 @@ export default function PilotApp() {
 
   const buildMarkdownRow = (cells: string[]) => `| ${cells.join(" | ")} |`;
 
-  const buildQuestionsTable = (data: EarAssessmentSummaryPayload) => {
+  const buildQuestionsTable = (
+    data: EarAssessmentSummaryPayload | NoseAssessmentSummaryPayload
+  ) => {
     const header = ["Symptom", "Question", "Answer"];
     const rows: string[][] = [];
     let prevSymptom = "";
@@ -288,10 +296,12 @@ export default function PilotApp() {
 
       {area === "ears" ? (
         <EarsAssessmentFlow audience={audience} onSessionChange={setSession} />
+      ) : area === "nose" ? (
+        <NoseAssessmentFlow audience={audience} onSessionChange={setSession} />
       ) : (
         <div className="rounded-3xl border border-[var(--color-border)] bg-white/80 p-6 text-sm text-[var(--color-muted)] shadow-xl">
-          The {area === "nose" ? "nose" : "throat and neck"} pathway is being
-          reworked. Please select ears for now.
+          The throat and neck pathway is being reworked. Please select ears or
+          nose for now.
         </div>
       )}
 

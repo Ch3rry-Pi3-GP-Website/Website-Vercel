@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { generateSummary, SummaryInputSchema } from "@/lib/llm/summaryGraph";
+import {
+  generateSummary as generateEarsSummary,
+  SummaryInputSchema as EarsSummaryInputSchema,
+} from "@/lib/llm/summaryGraph";
+import {
+  generateNoseSummary,
+  NoseSummaryInputSchema,
+} from "@/lib/llm/noseSummaryGraph";
 
 const MAX_BODY_BYTES = 50_000;
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -42,9 +49,9 @@ const rateLimit = (request: Request) => {
 };
 
 const SYMPTOMS_HEADING_REGEX = /^####\s*Symptoms/i;
-const ALT_DIAGNOSIS_HEADING = "#### Alternative diagnoses";
+type SupportedArea = "ears" | "nose";
 
-const validateSummary = (summary: string) => {
+const validateSummary = (summary: string, area: SupportedArea) => {
   if (summary.includes("```")) {
     return { ok: false, error: "Summary contains code fences." };
   }
@@ -52,12 +59,20 @@ const validateSummary = (summary: string) => {
     return { ok: false, error: "Summary uses prohibited wording." };
   }
 
-  const requiredHeadings = [
-    "#### Diagnosis",
-    "#### Alternative diagnoses",
-    "#### Recommended further steps",
-    "#### Potential treatment options",
-  ];
+  const requiredHeadings =
+    area === "nose"
+      ? [
+          "#### Diagnosis",
+          "#### Alternative diagnoses",
+          "#### Review and next steps",
+          "#### Potential treatment options",
+        ]
+      : [
+          "#### Diagnosis",
+          "#### Alternative diagnoses",
+          "#### Recommended further steps",
+          "#### Potential treatment options",
+        ];
 
   const lines = summary.split(/\r?\n/).map((line) => line.trim());
   const firstNonEmpty = lines.find((line) => line.length > 0);
@@ -87,6 +102,16 @@ const validateSummary = (summary: string) => {
   const hasTableHeader = /\|\s*Symptom\s*\|\s*Question\s*\|\s*Answer\s*\|/i.test(summary);
   if (!hasTableHeader) {
     return { ok: false, error: "Summary table header is missing." };
+  }
+
+  if (
+    area === "nose" &&
+    (!/#####\s*Resolved/i.test(summary) || !/#####\s*Unresolved/i.test(summary))
+  ) {
+    return {
+      ok: false,
+      error: "Nose summary must include Resolved and Unresolved subsections.",
+    };
   }
 
   if (
@@ -180,13 +205,14 @@ export async function POST(request: Request) {
     let body: unknown;
     try {
       body = JSON.parse(rawBody);
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { ok: false, error: "Invalid JSON payload." },
         { status: 400 }
       );
     }
 
+    const SummaryInputSchema = EarsSummaryInputSchema.or(NoseSummaryInputSchema);
     const parsed = SummaryInputSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -196,7 +222,10 @@ export async function POST(request: Request) {
     }
 
     const generateWithValidation = async () => {
-      const result = await generateSummary(parsed.data);
+      const result =
+        parsed.data.area === "nose"
+          ? await generateNoseSummary(parsed.data)
+          : await generateEarsSummary(parsed.data);
       let summary = normaliseSummary(result.summary ?? "");
       summary = enforceAlternativeDiagnosesSection(
         summary,
@@ -209,7 +238,7 @@ export async function POST(request: Request) {
           summary: "",
         };
       }
-      const summaryValidation = validateSummary(summary);
+      const summaryValidation = validateSummary(summary, parsed.data.area);
       if (!summaryValidation.ok) {
         return { ok: false, error: summaryValidation.error, summary };
       }

@@ -176,7 +176,7 @@ export const earSymptomOrder = earSymptoms.map((symptom) => symptom.label);
 
 const symptomDiagnosisOptions: Record<EarSymptomId, string[]> = {
   hearing_loss: ["Inner ear hearing loss (sensorineural hearing loss)"],
-  earache: ["Pain referred from other head/neck structures (referred otalgia)"],
+  earache: ["pain referred from other head/neck structures (referred otalgia)"],
   discharge: ["Outer ear infection (otitis externa)"],
   itching: ["Outer ear infection (otitis externa)"],
   tinnitus: ["Inner ear condition (inner ear pathology)"],
@@ -188,7 +188,7 @@ const symptomDiagnosisOptions: Record<EarSymptomId, string[]> = {
 };
 
 const EARACHE_ALTERNATIVE_DIAGNOSIS =
-  "Pain referred from other head/neck structures (referred otalgia)";
+  "pain referred from other head/neck structures (referred otalgia)";
 
 const lateralityQuestionIds = new Set([
   "hearing_loss_side",

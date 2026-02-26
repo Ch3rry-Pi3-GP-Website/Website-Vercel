@@ -98,7 +98,7 @@ export default function AreaSelector({ value, onChange }: AreaSelectorProps) {
       <div className="flex flex-wrap items-center gap-2">
         {(Object.keys(areaLabels) as AreaId[]).map((area) => {
           const isActive = area === value;
-          const isDisabled = area !== "ears";
+          const isDisabled = area === "throat";
           return (
             <button
               key={area}
@@ -162,7 +162,7 @@ export default function AreaSelector({ value, onChange }: AreaSelectorProps) {
         </div>
       )}
       <p className="mt-2 text-xs text-[var(--color-muted)]">
-        Nose and throat/neck pathways are coming next.
+        Throat and neck pathway is coming next.
       </p>
     </div>
   );
